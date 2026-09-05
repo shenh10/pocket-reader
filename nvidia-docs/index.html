@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NVIDIA 文档速读</title>
+  <style>
+    :root {
+      --bg: #f7f8f7;
+      --panel: #fff;
+      --ink: #1f2523;
+      --muted: #67706c;
+      --line: #dfe4e1;
+      --soft: #eef2ef;
+      --green: #4f8b36;
+      --cyan: #2f737b;
+      --amber: #a97721;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: var(--sans);
+      letter-spacing: 0;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 30px 0 48px;
+    }
+
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 22px;
+    }
+
+    .back:hover { color: var(--ink); }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.15;
+      font-weight: 760;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.65;
+      max-width: 780px;
+    }
+
+    .section-title {
+      margin: 28px 0 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 190px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 18px;
+    }
+
+    .card:hover {
+      border-color: #b9c6bf;
+      background: #fbfcfb;
+    }
+
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--soft);
+      color: #4a544f;
+      padding: 4px 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .desc {
+      margin: 12px 0 0;
+      color: #4c5551;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .path {
+      margin-top: 16px;
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .quick {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .quick a {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel);
+      padding: 7px 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .quick a:hover {
+      color: var(--ink);
+      border-color: #b9c6bf;
+    }
+
+    @media (max-width: 760px) {
+      .page { width: min(100% - 24px, 1180px); }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <a class="back" href="../">← 返回 My Pocket Reader</a>
+    <header>
+      <h1>NVIDIA 文档速读</h1>
+      <p class="subtitle">NVIDIA 相关文档的中文速读页。这里是入口目录，具体内容保持在各自子目录或独立 HTML 中，适合直接打开和收藏。</p>
+    </header>
+
+    <h2 class="section-title">文档入口</h2>
+    <section class="grid" aria-label="NVIDIA 文档入口">
+      <a class="card" href="./nccl/">
+        <div>
+          <div class="topline">
+            <h2>NCCL 环境变量与用例</h2>
+            <span class="badge">NCCL</span>
+          </div>
+          <p class="desc">环境变量、默认值、版本、性能分类、官方用法示例，以及源码层面的部分底层解释。</p>
+        </div>
+        <div class="path">/nvidia-docs/nccl/</div>
+      </a>
+
+      <a class="card" href="./cuda/programming-guide.html">
+        <div>
+          <div class="topline">
+            <h2>CUDA 编程指南教程速读</h2>
+            <span class="badge">CUDA</span>
+          </div>
+          <p class="desc">官方 Programming Guide 的教程入口、SIMT、内存层次、异步执行、CUDA Graphs、环境变量和附录卡片。</p>
+        </div>
+        <div class="path">/nvidia-docs/cuda/programming-guide.html</div>
+      </a>
+
+      <a class="card" href="./cuda/cublas-reference.html">
+        <div>
+          <div class="topline">
+            <h2>cuBLAS 速查</h2>
+            <span class="badge">cuBLAS</span>
+          </div>
+          <p class="desc">BLAS API、cuBLASLt Matmul、Tensor Core、workspace、日志、环境变量和调优相关入口。</p>
+        </div>
+        <div class="path">/nvidia-docs/cuda/cublas-reference.html</div>
+      </a>
+
+      <a class="card" href="./cuda/ptx-reference.html">
+        <div>
+          <div class="topline">
+            <h2>PTX ISA 速查</h2>
+            <span class="badge">PTX</span>
+          </div>
+          <p class="desc">PTX 语法、状态空间、类型、内存一致性、指令集、特殊寄存器和性能相关指令族。</p>
+        </div>
+        <div class="path">/nvidia-docs/cuda/ptx-reference.html</div>
+      </a>
+
+      <a class="card" href="./cutlass/">
+        <div>
+          <div class="topline">
+            <h2>CUTLASS 文档速读</h2>
+            <span class="badge">CUTLASS</span>
+          </div>
+          <p class="desc">Python DSL、Operator API、C++ Core、CuTe、GEMM、Profiler、Blackwell/SM100 和任务调度卡片。</p>
+        </div>
+        <div class="path">/nvidia-docs/cutlass/</div>
+      </a>
+    </section>
+
+    <h2 class="section-title">Quick Links</h2>
+    <nav class="quick" aria-label="快速链接">
+      <a href="./nccl/env-tool.html">NCCL env-tool</a>
+      <a href="./cuda/">CUDA Guide alias</a>
+      <a href="./cuda/cublas-reference.html">cuBLAS</a>
+      <a href="./cuda/ptx-reference.html">PTX</a>
+      <a href="./cutlass/">CUTLASS</a>
+    </nav>
+  </main>
+</body>
+</html>

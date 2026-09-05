@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Pocket Reader</title>
+  <style>
+    :root {
+      --bg: #f7f8f7;
+      --panel: #fff;
+      --ink: #1f2523;
+      --muted: #68706d;
+      --line: #dfe4e1;
+      --soft: #eef2ef;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: var(--sans);
+      letter-spacing: 0;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 34px 0 48px;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.15;
+      font-weight: 750;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 720px;
+    }
+
+    .repo-link {
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 8px 12px;
+      border-radius: 6px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .repo-link:hover {
+      color: var(--ink);
+      border-color: #b8c4bd;
+    }
+
+    .section-title {
+      margin: 28px 0 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .item {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr) 150px;
+      gap: 16px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 16px;
+    }
+
+    .item:hover {
+      border-color: #b9c6bf;
+      background: #fbfcfb;
+    }
+
+    .name {
+      font-size: 18px;
+      font-weight: 750;
+    }
+
+    .path {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .desc {
+      margin: 0;
+      color: #4c5551;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .tag {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--soft);
+      color: #48524d;
+      padding: 4px 8px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .notes {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .note {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .68);
+      padding: 14px 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .note strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    code {
+      font-family: var(--mono);
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: min(100% - 24px, 1180px);
+        padding-top: 24px;
+      }
+
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .item {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .tags {
+        justify-content: flex-start;
+      }
+
+      .notes {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <div>
+        <h1>My Pocket Reader</h1>
+        <p class="subtitle">GitHub Pages 静态入口。每个专题放在独立子目录里，方便直接打开、分享和后续继续扩展。</p>
+      </div>
+      <a class="repo-link" href="https://github.com/shenh10/pocket-reader">github.com/shenh10/pocket-reader</a>
+    </header>
+
+    <h2 class="section-title">Projects</h2>
+    <section class="list" aria-label="项目列表">
+      <a class="item" href="./nvidia-docs/">
+        <div>
+          <div class="name">NVIDIA Docs</div>
+          <span class="path">/nvidia-docs/</span>
+        </div>
+        <p class="desc">NCCL 环境变量、官方用例、CUDA Programming Guide、cuBLAS、PTX 的中文速查与卡片整理。</p>
+        <div class="tags">
+          <span class="tag">CUDA</span>
+          <span class="tag">NCCL</span>
+          <span class="tag">PTX</span>
+        </div>
+      </a>
+
+      <a class="item" href="./ai-infra-board/">
+        <div>
+          <div class="name">AI Infra Board</div>
+          <span class="path">/ai-infra-board/</span>
+        </div>
+        <p class="desc">AI infra merged PR 看板，用于跟踪 vLLM、SGLang、FlashInfer 等项目的每日重要变更。</p>
+        <div class="tags">
+          <span class="tag">PR</span>
+          <span class="tag">Daily</span>
+          <span class="tag">Infra</span>
+        </div>
+      </a>
+
+      <a class="item" href="./stockarena/">
+        <div>
+          <div class="name">Stockarena</div>
+          <span class="path">/stockarena/</span>
+        </div>
+        <p class="desc">A/H 股投研、持仓复盘、行情监控和调仓辅助工作台；公开部署时私有持仓依赖 Supabase 配置。</p>
+        <div class="tags">
+          <span class="tag">Portfolio</span>
+          <span class="tag">Market</span>
+          <span class="tag">Research</span>
+        </div>
+      </a>
+    </section>
+
+    <section class="notes" aria-label="发布说明">
+      <div class="note">
+        <strong>部署方式</strong>
+        GitHub Pages 使用 Actions 发布 `_site`，根首页复制到 `/`，各项目发布到同名子目录。
+      </div>
+      <div class="note">
+        <strong>新增内容</strong>
+        纯 HTML 直接放新目录；Vite/React 项目构建时使用相对资源路径，避免子目录 404。
+      </div>
+    </section>
+  </main>
+</body>
+</html>
