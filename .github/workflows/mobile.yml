@@ -57,9 +57,7 @@ jobs:
           profile: pixel_7
           disable-animations: true
           script: |
-            ./android/gradlew -p android --no-daemon connectedDebugAndroidTest
-            mkdir -p test-results/android
-            adb pull /sdcard/Android/data/cc.shenhan.pocketreader/files/native-daily-styled.png test-results/android/native-daily-styled.png
+            bash scripts/test-android-webview.sh
       - uses: actions/upload-artifact@v7
         if: always()
         with:
