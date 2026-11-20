@@ -250,3 +250,21 @@
     display: none;
   }
 }
+/* Long kernel identifiers must wrap inside tutorial controls and flow boxes. */
+.pr-mobile .wrap {
+  overflow-wrap: anywhere;
+}
+.pr-mobile .wrap .controls label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.pr-mobile .wrap .controls select,
+.pr-mobile .wrap .controls input {
+  width: 100%;
+  min-width: 0;
+}
+.pr-mobile .wrap .flow span {
+  min-width: 0;
+  flex: 1 1 140px;
+  overflow-wrap: anywhere;
+}

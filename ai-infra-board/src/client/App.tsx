@@ -16,7 +16,7 @@ import {
   Star,
   TerminalSquare,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AnnualHighlightRecord,
   AnnualHighlightsResponse,
@@ -691,6 +691,7 @@ export function App() {
   const [backfilling, setBackfilling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const latestLoad = useRef(0);
 
   useEffect(() => {
     if (!dashboard?.snapshot || dashboard.date !== date) return;
@@ -716,6 +717,7 @@ export function App() {
   }
 
   async function load(selectedDate = date) {
+    const requestId = ++latestLoad.current;
     setLoading(true);
     setError(null);
     try {
@@ -723,12 +725,13 @@ export function App() {
         api<DashboardResponse>(`/api/dashboard?date=${selectedDate}`),
         api<SnapshotSummary[]>("/api/days"),
       ]);
+      if (requestId !== latestLoad.current) return;
       setDashboard(dashboardData);
       setDays(dayData);
     } catch (err) {
-      setError((err as Error).message);
+      if (requestId === latestLoad.current) setError((err as Error).message);
     } finally {
-      setLoading(false);
+      if (requestId === latestLoad.current) setLoading(false);
     }
   }
 

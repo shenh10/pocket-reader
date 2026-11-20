@@ -224,7 +224,15 @@ if (native) {
   StatusBar.setStyle({ style: Style.Light }).catch(() => {});
   App.addListener("appUrlOpen", ({ url }) => handleLink(url));
   App.getLaunchUrl()
-    .then((value) => value && handleLink(value.url))
+    .then((value) => {
+      if (
+        !value?.url ||
+        sessionStorage.getItem("pocket-handled-launch") === value.url
+      )
+        return;
+      sessionStorage.setItem("pocket-handled-launch", value.url);
+      return handleLink(value.url);
+    })
     .catch(() => {});
   App.addListener("backButton", ({ canGoBack }) => {
     if (canGoBack) history.back();
