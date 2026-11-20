@@ -165,13 +165,48 @@ export async function saveFetchedPullRequests(
       ]
     );
 
-    for (const pr of pullRequests) {
-      const repo = repositories.find((item) => item.fullName === pr.repoFullName);
-      if (!repo) {
-        continue;
-      }
-      const result = await client.query(
-        `
+    // Batch inserts keep multi-month backfills from requiring two DB round trips per PR.
+    const records = pullRequests.filter(pr => repositories.some(repo => repo.fullName === pr.repoFullName));
+    for (let offset = 0; offset < records.length; offset += 100) {
+      const values: unknown[] = [];
+      const placeholders = records.slice(offset, offset + 100).map((pr, index) => {
+        const repo = repositories.find(item => item.fullName === pr.repoFullName)!;
+        values.push(
+          repo.id,
+          date,
+          pr.number,
+          pr.githubId,
+          pr.title,
+          pr.body,
+          pr.url,
+          pr.apiUrl,
+          pr.author,
+          pr.authorAvatarUrl,
+          pr.mergedAt,
+          pr.createdAt,
+          pr.updatedAt,
+          pr.baseRef,
+          pr.headRef,
+          pr.mergeCommitSha,
+          pr.additions,
+          pr.deletions,
+          pr.changedFiles,
+          pr.labels,
+          pr.category,
+          pr.importance,
+          pr.importanceReason,
+          pr.learningComment,
+          pr.evaluation.motivation,
+          pr.evaluation.previousBehavior,
+          pr.evaluation.newBehavior,
+          pr.evaluation.rationale,
+          pr.evaluation.experiments,
+          JSON.stringify(pr.raw)
+        );
+        const args = Array.from({ length: 30 }, (_, column) => `$${index * 30 + column + 1}${column === 29 ? "::jsonb" : ""}`);
+        return `(${args.join(", ")}, now())`;
+      }).join(", ");
+      const result = await client.query(`
           INSERT INTO pull_requests (
             repo_id, snapshot_date, number, github_id, title, body, url, api_url,
             author, author_avatar_url, merged_at, created_at, updated_at, base_ref,
@@ -180,14 +215,7 @@ export async function saveFetchedPullRequests(
             motivation, previous_behavior, new_behavior, rationale, experiment_effect,
             raw, last_seen_at
           )
-          VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8,
-            $9, $10, $11, $12, $13, $14,
-            $15, $16, $17, $18, $19, $20,
-            $21, $22, $23, $24,
-            $25, $26, $27, $28, $29,
-            $30::jsonb, now()
-          )
+          VALUES ${placeholders}
           ON CONFLICT (repo_id, number) DO UPDATE SET
             snapshot_date = EXCLUDED.snapshot_date,
             github_id = EXCLUDED.github_id,
@@ -219,47 +247,10 @@ export async function saveFetchedPullRequests(
             raw = EXCLUDED.raw,
             last_seen_at = now()
           RETURNING id
-        `,
-        [
-          repo.id,
-          date,
-          pr.number,
-          pr.githubId,
-          pr.title,
-          pr.body,
-          pr.url,
-          pr.apiUrl,
-          pr.author,
-          pr.authorAvatarUrl,
-          pr.mergedAt,
-          pr.createdAt,
-          pr.updatedAt,
-          pr.baseRef,
-          pr.headRef,
-          pr.mergeCommitSha,
-          pr.additions,
-          pr.deletions,
-          pr.changedFiles,
-          pr.labels,
-          pr.category,
-          pr.importance,
-          pr.importanceReason,
-          pr.learningComment,
-          pr.evaluation.motivation,
-          pr.evaluation.previousBehavior,
-          pr.evaluation.newBehavior,
-          pr.evaluation.rationale,
-          pr.evaluation.experiments,
-          JSON.stringify(pr.raw)
-        ]
-      );
+        `, values);
       await client.query(
-        `
-          INSERT INTO pr_user_state (pr_id)
-          VALUES ($1)
-          ON CONFLICT (pr_id) DO NOTHING
-        `,
-        [result.rows[0].id]
+        `INSERT INTO pr_user_state (pr_id) SELECT unnest($1::bigint[]) ON CONFLICT (pr_id) DO NOTHING`,
+        [result.rows.map(row => row.id)]
       );
     }
 
@@ -287,6 +278,15 @@ export async function saveFetchedPullRequests(
   } finally {
     client.release();
   }
+}
+
+export async function latestSuccessfulSnapshotDate(): Promise<string | undefined> {
+  const result = await pool.query(`
+    SELECT max(snapshot_date)::text AS date FROM daily_snapshots
+    WHERE status = 'ok'
+      AND repo_count = (SELECT count(*) FROM repositories WHERE enabled)
+  `);
+  return result.rows[0]?.date ?? undefined;
 }
 
 export async function listSnapshots(limit = 90): Promise<SnapshotSummary[]> {
@@ -443,7 +443,7 @@ function toPullRequestRecord(row: Record<string, unknown>): PullRequestRecord {
   const repoFullName = String(row.full_name);
   const repoDisplayName = String(row.display_name);
   const [owner = "", name = ""] = repoFullName.split("/");
-  const fallbackAnalysis = analyzePullRequest(
+  const fallbackAnalysis = [row.motivation, row.previous_behavior, row.new_behavior, row.rationale, row.experiment_effect].every(Boolean) ? null : analyzePullRequest(
     {
       title: String(row.title),
       body: row.body == null ? null : String(row.body),
@@ -466,11 +466,11 @@ function toPullRequestRecord(row: Record<string, unknown>): PullRequestRecord {
     }
   );
   const evaluation = {
-    motivation: String(row.motivation || fallbackAnalysis.evaluation.motivation),
-    previousBehavior: String(row.previous_behavior || fallbackAnalysis.evaluation.previousBehavior),
-    newBehavior: String(row.new_behavior || fallbackAnalysis.evaluation.newBehavior),
-    rationale: String(row.rationale || fallbackAnalysis.evaluation.rationale),
-    experiments: String(row.experiment_effect || fallbackAnalysis.evaluation.experiments)
+    motivation: String(row.motivation || fallbackAnalysis?.evaluation.motivation),
+    previousBehavior: String(row.previous_behavior || fallbackAnalysis?.evaluation.previousBehavior),
+    newBehavior: String(row.new_behavior || fallbackAnalysis?.evaluation.newBehavior),
+    rationale: String(row.rationale || fallbackAnalysis?.evaluation.rationale),
+    experiments: String(row.experiment_effect || fallbackAnalysis?.evaluation.experiments)
   };
   return {
     id: Number(row.id),
@@ -546,65 +546,56 @@ function stripHighlightsLocalState(highlights: AnnualHighlightsResponse): Annual
 }
 
 export async function exportStaticDataset(options: {
-  outDir: string;
-  start?: string;
-  end?: string;
-  year?: number;
-  dashboardLimit?: number;
-  highlightLimit?: number;
-  timelineLimit?: number;
+  outDir: string; start?: string; end?: string; year?: number;
+  dashboardLimit?: number; highlightLimit?: number; timelineLimit?: number;
 }): Promise<{ path: string; days: number; prs: number; generatedAt: string }> {
-  const range = recentHalfYearRange();
-  const year = options.year ?? Number(todayISODate().slice(0, 4));
-  const days = await listSnapshots(options.dashboardLimit ?? 220);
-  const start = options.start ?? days[days.length - 1]?.date ?? range.start;
-  const end = options.end ?? days[0]?.date ?? range.end;
-  const dashboards: StaticDataset["dashboards"] = {};
-
-  for (const day of days) {
-    dashboards[day.date] = stripDashboardLocalState(await getDashboard(day.date));
+  const days = (await listSnapshots(options.dashboardLimit ?? 10000))
+    .filter(day => (!options.start || day.date >= options.start) && (!options.end || day.date <= options.end));
+  if (!days.length) throw new Error("Refusing to export an empty archive. Run fetch/catch-up first.");
+  const dashboardFiles: Record<string, string> = {};
+  await fs.mkdir(path.join(options.outDir, "days"), { recursive: true });
+  let prCount = 0;
+  for (let offset = 0; offset < days.length; offset += 3) {
+    await Promise.all(days.slice(offset, offset + 3).map(async day => {
+    const dashboard = stripDashboardLocalState(await getDashboard(day.date, true));
+    // The UI uses the extracted evaluation and links to GitHub for the full body.
+    dashboard.prs = dashboard.prs.map(pr => ({ ...pr, body: null }));
+    prCount += dashboard.prs.length;
+    const file = `days/${day.date}.json`;
+    await fs.writeFile(path.join(options.outDir, file), JSON.stringify(dashboard));
+    dashboardFiles[day.date] = file;
+    }));
   }
-
-  const yearSet = new Set<number>([year]);
-  for (const day of days) {
-    const parsedYear = Number(day.date.slice(0, 4));
-    if (Number.isFinite(parsedYear)) {
-      yearSet.add(parsedYear);
-    }
-  }
-
+  const yearSet = new Set(days.map(day => Number(day.date.slice(0, 4))));
+  yearSet.add(options.year ?? Number(todayISODate().slice(0, 4)));
   const highlights: StaticDataset["highlights"] = {};
-  for (const item of yearSet) {
-    highlights[String(item)] = stripHighlightsLocalState(
-      await getAnnualHighlights(item, options.highlightLimit ?? 12)
-    );
+  for (const year of yearSet) {
+    const result = stripHighlightsLocalState(await getAnnualHighlights(year, options.highlightLimit ?? 12));
+    result.prs = result.prs.map(pr => ({ ...pr, body: null }));
+    highlights[String(year)] = result;
   }
-
-  const timeline = stripTimelineLocalState(
-    await getTimeline(start, end, options.timelineLimit ?? 8000)
-  );
   const generatedAt = new Date().toISOString();
   const dataset: StaticDataset = {
-    generatedAt,
-    defaultDate: days[0]?.date ?? todayISODate(),
-    days,
-    dashboards,
-    timeline,
+    generatedAt, defaultDate: days[0].date, days, dashboards: {}, dashboardFiles,
+    timeline: { start: days[days.length-1].date, end: days[0].date, prs: [], stats: { total: prCount, days: days.length, byMonth: {} } },
     highlights
   };
-
-  await fs.mkdir(options.outDir, { recursive: true });
   const outputPath = path.join(options.outDir, "static.json");
-  await fs.writeFile(outputPath, `${JSON.stringify(dataset, null, 2)}\n`, "utf8");
-  return {
-    path: outputPath,
-    days: days.length,
-    prs: timeline.prs.length,
-    generatedAt
-  };
+  // Publish the manifest last, so readers never see filenames before their content exists.
+  await fs.writeFile(outputPath + ".tmp", JSON.stringify(dataset));
+  await fs.rename(outputPath + ".tmp", outputPath);
+  return { path: outputPath, days: days.length, prs: prCount, generatedAt };
 }
 
-export async function getDashboard(date: string): Promise<DashboardResponse> {
+export async function getDashboard(date: string, compact = false): Promise<DashboardResponse> {
+  // Static exports use the saved evaluations and do not transfer large raw payloads or bodies.
+  const columns = compact ? `
+    pr.id, pr.repo_id, pr.number, pr.github_id, pr.title, NULL::text AS body,
+    pr.url, pr.author, pr.author_avatar_url, pr.merged_at, pr.created_at, pr.updated_at,
+    pr.base_ref, pr.head_ref, pr.additions, pr.deletions, pr.changed_files, pr.labels,
+    pr.category, pr.importance, pr.importance_reason, pr.learning_comment,
+    pr.motivation, pr.previous_behavior, pr.new_behavior, pr.rationale, pr.experiment_effect
+  ` : "pr.*";
   const [snapshots, repos, prs] = await Promise.all([
     pool.query(
       `
@@ -618,7 +609,7 @@ export async function getDashboard(date: string): Promise<DashboardResponse> {
     pool.query(
       `
         SELECT
-          pr.*,
+          ${columns},
           r.full_name,
           r.display_name,
           r.importance_weight AS repo_importance_weight,

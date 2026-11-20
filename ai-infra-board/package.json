@@ -9,6 +9,8 @@
     "dev:web": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
     "start": "NODE_ENV=production tsx src/server/index.ts",
+    "catch-up": "tsx src/server/cli.ts catch-up",
+    "test": "node --import tsx --test scripts/*.test.ts",
     "fetch": "tsx src/server/cli.ts fetch",
     "fetch-range": "tsx src/server/cli.ts fetch-range",
     "reanalyze": "tsx src/server/cli.ts reanalyze",

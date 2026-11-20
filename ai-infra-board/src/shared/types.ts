@@ -131,6 +131,8 @@ export interface FetchRangeResponse {
 }
 
 export interface StaticDataset {
+  /** Version 2 loads daily data on demand instead of downloading the whole archive. */
+  dashboardFiles?: Record<string, string>;
   generatedAt: string;
   defaultDate: string;
   days: SnapshotSummary[];

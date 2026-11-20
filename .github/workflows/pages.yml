@@ -84,7 +84,7 @@ jobs:
               npm run fetch-range
             fi
           else
-            npm run fetch -- --date today
+            npm run catch-up
           fi
           npm run build:pages
           mkdir -p ../_site/ai-infra-board

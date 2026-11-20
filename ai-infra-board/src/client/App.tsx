@@ -43,6 +43,9 @@ type DisplayPullRequest = PullRequestRecord & Partial<Pick<AnnualHighlightRecord
 type LocalPrState = Partial<Pick<PullRequestRecord, "isFavorite" | "isRead" | "watchLater" | "userNote">>;
 
 let staticDatasetPromise: Promise<StaticDataset> | null = null;
+const dayRequests = new Map<string, Promise<DashboardResponse>>();
+const shanghaiDateFormatter = new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Shanghai",year:"numeric",month:"2-digit",day:"2-digit"});
+const shanghaiDay = (timestamp: string) => shanghaiDateFormatter.format(new Date(timestamp));
 
 function readLocalStates(): Record<string, LocalPrState> {
   try {
@@ -61,6 +64,11 @@ function withLocalState<T extends PullRequestRecord>(pr: T): T {
     ...pr,
     ...(readLocalStates()[String(pr.id)] ?? {})
   };
+}
+
+function withLocalStates<T extends PullRequestRecord>(prs: T[]): T[] {
+  const states = readLocalStates();
+  return prs.map(pr => ({...pr, ...(states[String(pr.id)] ?? {})}));
 }
 
 function dashboardStats(prs: PullRequestRecord[]): DashboardResponse["stats"] {
@@ -83,9 +91,9 @@ function dashboardStats(prs: PullRequestRecord[]): DashboardResponse["stats"] {
 function timelineStats(prs: PullRequestRecord[]): TimelineResponse["stats"] {
   return {
     total: prs.length,
-    days: new Set(prs.map((pr) => pr.mergedAt.slice(0, 10))).size,
+    days: new Set(prs.map((pr) => shanghaiDay(pr.mergedAt))).size,
     byMonth: prs.reduce<Record<string, number>>((acc, pr) => {
-      const month = pr.mergedAt.slice(0, 7);
+      const month = shanghaiDay(pr.mergedAt).slice(0, 7);
       acc[month] = (acc[month] ?? 0) + 1;
       return acc;
     }, {})
@@ -111,10 +119,21 @@ function findStaticPr(dataset: StaticDataset, id: number): PullRequestRecord | n
       return match;
     }
   }
-  return dataset.timeline.prs.find((pr) => pr.id === id) ?? null;
+  return dataset.timeline.prs.find((pr) => pr.id === id) ?? Object.values(dataset.highlights).flatMap(year => year.prs).find(pr => pr.id === id) ?? null;
 }
 
-function staticDashboard(dataset: StaticDataset, date: string): DashboardResponse {
+async function loadStaticDay(dataset: StaticDataset, date: string): Promise<void> {
+  const file = dataset.dashboardFiles?.[date];
+  if (!file || dataset.dashboards[date]) return;
+  if (!dayRequests.has(date)) dayRequests.set(date, fetch(`${import.meta.env.BASE_URL}data/${file}?v=${encodeURIComponent(dataset.generatedAt)}`).then(async response => {
+    if (!response.ok) throw new Error(`归档 ${date} 加载失败：${response.status}`);
+    return response.json() as Promise<DashboardResponse>;
+  }).catch(error => { dayRequests.delete(date); throw error; }));
+  dataset.dashboards[date] = await dayRequests.get(date)!;
+}
+
+async function staticDashboard(dataset: StaticDataset, date: string): Promise<DashboardResponse> {
+  await loadStaticDay(dataset, date);
   const dashboard =
     dataset.dashboards[date] ??
     ({
@@ -124,7 +143,7 @@ function staticDashboard(dataset: StaticDataset, date: string): DashboardRespons
       repos: Object.values(dataset.dashboards)[0]?.repos ?? [],
       stats: dashboardStats([])
     } satisfies DashboardResponse);
-  const prs = dashboard.prs.map(withLocalState);
+  const prs = withLocalStates(dashboard.prs);
   return {
     ...dashboard,
     prs,
@@ -132,20 +151,15 @@ function staticDashboard(dataset: StaticDataset, date: string): DashboardRespons
   };
 }
 
-function staticTimeline(dataset: StaticDataset, start: string, end: string, limit: number): TimelineResponse {
-  const prs = dataset.timeline.prs
-    .filter((pr) => {
-      const day = pr.mergedAt.slice(0, 10);
-      return day >= start && day <= end;
-    })
-    .slice(0, limit)
-    .map(withLocalState);
-  return {
-    start,
-    end,
-    prs,
-    stats: timelineStats(prs)
-  };
+async function staticTimeline(dataset: StaticDataset, start: string, end: string, _limit: number): Promise<TimelineResponse> {
+  if (dataset.dashboardFiles) {
+    const dates = dataset.days.filter(day => day.date >= start && day.date <= end).map(day => day.date);
+    for (let i=0;i<dates.length;i+=6) await Promise.all(dates.slice(i,i+6).map(date => loadStaticDay(dataset,date)));
+  }
+  const archive = dataset.dashboardFiles ? Object.values(dataset.dashboards).flatMap(day => day.prs) : dataset.timeline.prs;
+  const prs = withLocalStates(archive.filter(pr => { const day = shanghaiDay(pr.mergedAt); return day >= start && day <= end; })
+    .sort((a,b) => b.mergedAt.localeCompare(a.mergedAt)));
+  return { start, end, prs, stats: timelineStats(prs) };
 }
 
 function staticHighlights(dataset: StaticDataset, year: number): AnnualHighlightsResponse {
@@ -158,7 +172,7 @@ function staticHighlights(dataset: StaticDataset, year: number): AnnualHighlight
     } satisfies AnnualHighlightsResponse);
   return {
     ...highlights,
-    prs: highlights.prs.map(withLocalState)
+    prs: withLocalStates(highlights.prs)
   };
 }
 
@@ -433,7 +447,7 @@ function filterPullRequests(
 function groupByDate(prs: DisplayPullRequest[]): Array<[string, DisplayPullRequest[]]> {
   const grouped = new Map<string, DisplayPullRequest[]>();
   for (const pr of prs) {
-    const key = pr.mergedAt.slice(0, 10);
+    const key = shanghaiDay(pr.mergedAt);
     grouped.set(key, [...(grouped.get(key) ?? []), pr]);
   }
   return Array.from(grouped.entries()).sort(([a], [b]) => b.localeCompare(a));
@@ -504,6 +518,8 @@ export function App() {
   const [timeline, setTimeline] = useState<TimelineResponse | null>(null);
   const [highlights, setHighlights] = useState<AnnualHighlightsResponse | null>(null);
   const [days, setDays] = useState<SnapshotSummary[]>([]);
+  const [visibleTimeline, setVisibleTimeline] = useState(200);
+  const [staticInfo, setStaticInfo] = useState<StaticDataset | null>(null);
   const [surface, setSurface] = useState<SurfaceMode>("board");
   const [timelineStart, setTimelineStart] = useState(sixMonthsAgoLocal);
   const [timelineEnd, setTimelineEnd] = useState(todayLocal);
@@ -533,6 +549,14 @@ export function App() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (STATIC_MODE) loadStaticDataset().then(data => {
+      setStaticInfo(data);
+      if (!new URLSearchParams(window.location.search).has("date") && !data.days.some(day => day.date === todayLocal())) setDate(data.defaultDate);
+    }).catch(err => setError(err.message));
+  }, []);
+  useEffect(() => { setVisibleTimeline(200); }, [timelineStart,timelineEnd,query,mode,category]);
 
   useEffect(() => {
     void load(date);
@@ -741,6 +765,7 @@ export function App() {
         </div>
       </section>
 
+      {staticInfo && <div className="toast">数据截至 {staticInfo.defaultDate} · 导出于 {formatTime(staticInfo.generatedAt)} · {staticInfo.timeline.stats.total.toLocaleString()} 条归档。解读为规则提取，基于 PR 正文和最多前 30 个文件摘要，未审阅完整 diff；完整证据请查看原 PR。{staticInfo.defaultDate < todayLocal() && " 当前为历史快照，等待后台更新。"}</div>}
       <section className="statusBand">
         <div className="stat">
           <span>{liveStats.total}</span>
@@ -890,13 +915,14 @@ export function App() {
       {surface === "timeline" && (
         <ChronicleView
           title="半年度时间线"
-          caption={`${timeline?.start ?? timelineStart} 到 ${timeline?.end ?? timelineEnd}，按合并时间倒序`}
-          prs={timelineFiltered}
+          caption={`${timeline?.start ?? timelineStart} 到 ${timeline?.end ?? timelineEnd}，按合并时间倒序；筛选结果 ${timelineFiltered.length} 条`}
+          prs={timelineFiltered.slice(0,visibleTimeline)}
           emptyCopy="半年度时间线还没有归档记录"
           onPatch={patchPr}
         />
       )}
 
+      {surface === "timeline" && timelineFiltered.length > visibleTimeline && <button className="commandButton" onClick={() => setVisibleTimeline(value => value+200)}>已显示 {visibleTimeline} / {timelineFiltered.length}，加载更多</button>}
       {surface === "picks" && (
         <ChronicleView
           title="年度精选"

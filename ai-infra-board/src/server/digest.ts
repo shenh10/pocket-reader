@@ -4,6 +4,7 @@ import {
   backfillPullRequestEvaluations,
   getTopPullRequestsForDate,
   listRepositories,
+  latestSuccessfulSnapshotDate,
   runMigrations,
   saveFetchedPullRequests,
   seedRepositories
@@ -30,7 +31,8 @@ export async function runDailyDigest(options: {
   const allRepositories = await listRepositories(true);
   const repositories = filterRepositories(allRepositories, options.repoFilters);
   const { pullRequests, warnings } = await fetchMergedPullRequestsForDate(date, repositories);
-  const result = await saveFetchedPullRequests(date, allRepositories, pullRequests, warnings);
+  if (warnings.length) throw new Error(`Incomplete GitHub fetch: ${warnings.join("; ")}`);
+  const result = await saveFetchedPullRequests(date, repositories, pullRequests, warnings);
 
   if (options.notify) {
     const top = await getTopPullRequestsForDate(date);
@@ -53,6 +55,7 @@ export async function runRangeDigest(options: {
   const allRepositories = await listRepositories(true);
   const repositories = filterRepositories(allRepositories, options.repoFilters);
   const { pullRequests, warnings } = await fetchMergedPullRequestsForRange(start, end, repositories);
+  if (warnings.length) throw new Error(`Incomplete GitHub fetch: ${warnings.join("; ")}`);
   const grouped = new Map<string, typeof pullRequests>();
 
   for (const date of dates) {
@@ -67,7 +70,7 @@ export async function runRangeDigest(options: {
 
   let archivedTotal = 0;
   for (const date of dates) {
-    const result = await saveFetchedPullRequests(date, allRepositories, grouped.get(date) ?? [], warnings);
+    const result = await saveFetchedPullRequests(date, repositories, grouped.get(date) ?? [], warnings);
     archivedTotal += result.prCount;
   }
 
@@ -84,6 +87,14 @@ export async function runRangeDigest(options: {
     fetchedAt: new Date().toISOString(),
     warnings
   };
+}
+
+export async function runCatchUpDigest(options: {notify?: boolean} = {}): Promise<FetchRangeResponse> {
+  const latest = await latestSuccessfulSnapshotDate();
+  const yesterday = normalizeDateInput("yesterday");
+  // Revisit the latest snapshot after an outage and always overlap yesterday's full day.
+  const start = latest ? (latest < yesterday ? latest : yesterday) : recentHalfYearRange().start;
+  return runRangeDigest({start, end: normalizeDateInput("today"), notify: options.notify});
 }
 
 function filterRepositories<T extends { fullName: string; displayName: string }>(

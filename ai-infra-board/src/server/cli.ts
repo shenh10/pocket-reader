@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import { backfillPullRequestEvaluations, checkDatabaseConnection, exportStaticDataset, pool } from "./db";
-import { bootstrapDatabase, runDailyDigest, runRangeDigest } from "./digest";
+import { bootstrapDatabase, runCatchUpDigest, runDailyDigest, runRangeDigest } from "./digest";
 import { sendDesktopNotification } from "./notifications";
 
 dotenv.config();
@@ -37,6 +37,11 @@ async function main(): Promise<void> {
   if (command === "db-setup") {
     const result = await checkDatabaseConnection();
     console.log(JSON.stringify({ ok: true, ...result }, null, 2));
+    return;
+  }
+
+  if (command === "catch-up") {
+    console.log(JSON.stringify(await runCatchUpDigest({notify: process.argv.includes("--notify")}), null, 2));
     return;
   }
 
@@ -88,6 +93,7 @@ async function main(): Promise<void> {
 
   console.log("Usage: tsx src/server/cli.ts fetch [--date YYYY-MM-DD|today|yesterday] [--repo owner/name] [--notify]");
   console.log("       tsx src/server/cli.ts fetch-range [--start YYYY-MM-DD] [--end YYYY-MM-DD] [--repo owner/name] [--notify]");
+  console.log("       tsx src/server/cli.ts catch-up [--notify]");
   console.log("       tsx src/server/cli.ts reanalyze");
   console.log("       tsx src/server/cli.ts export-static [--out public/data] [--start YYYY-MM-DD] [--end YYYY-MM-DD] [--year YYYY]");
   console.log("       tsx src/server/cli.ts db-check");

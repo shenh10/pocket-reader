@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import { APP_TIMEZONE } from "./config";
-import { runDailyDigest } from "./digest";
+import { runCatchUpDigest } from "./digest";
 
 export function startScheduler(): void {
   if (process.env.ENABLE_SCHEDULER === "false") {
@@ -17,8 +17,8 @@ export function startScheduler(): void {
     expression,
     async () => {
       try {
-        const result = await runDailyDigest({ notify: true });
-        console.log(`[scheduler] fetched ${result.prCount} PRs for ${result.date}`);
+        const result = await runCatchUpDigest({ notify: true });
+        console.log(`[scheduler] fetched ${result.prCount} PRs for ${result.start}..${result.end}`);
       } catch (error) {
         console.error("[scheduler] daily fetch failed:", error);
       }

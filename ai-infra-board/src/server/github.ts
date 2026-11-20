@@ -1,3 +1,4 @@
+import { fetchMergedSearch } from "./github-search";
 import { execFileSync } from "node:child_process";
 import {
   CategoryKey,
@@ -213,6 +214,7 @@ async function fetchMergedPullRequestsBetween(
   options: FetchOptions = {}
 ): Promise<{ pullRequests: FetchedPullRequest[]; warnings: string[] }> {
   const token = resolveGithubToken(options.githubToken);
+  if (token) return fetchMergedSearch(start, end, repositories, token);
   const maxPages = options.maxPages ?? Number(process.env.GITHUB_MAX_PAGES ?? 4);
   const enrichConcurrency = Math.max(1, Number(process.env.GITHUB_ENRICH_CONCURRENCY ?? 6));
   const pullRequests: FetchedPullRequest[] = [];
