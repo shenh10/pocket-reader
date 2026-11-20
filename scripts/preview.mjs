@@ -21,9 +21,12 @@ http
       return;
     }
     const root = path.resolve(mobile ? "_mobile" : "_site");
+    // Match Capacitor's SPA fallback instead of a web server's directory indexes.
+    const localPath = url.pathname.slice(prefix.length);
+    const nativeFallback = mobile && !path.posix.basename(localPath).includes(".");
     let file = path.resolve(
       root,
-      decodeURIComponent(url.pathname.slice(prefix.length)) || ".",
+      nativeFallback ? "index.html" : decodeURIComponent(localPath) || ".",
     );
     if (file !== root && !file.startsWith(root + path.sep)) {
       res.writeHead(403).end();

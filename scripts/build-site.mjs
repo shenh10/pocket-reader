@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 import { createHash } from "node:crypto";
+import { prepareNativePage } from "./native-pages.mjs";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const native = process.argv.includes("--native"),
   reuse = process.argv.includes("--reuse-builds");
@@ -79,7 +80,9 @@ async function files(dir) {
     )
   ).flat();
 }
-for (const file of (await files(out)).filter((f) => f.endsWith(".html"))) {
+const htmlFiles = (await files(out)).filter(f => f.endsWith(".html"));
+const indexFiles = new Set(htmlFiles.map(f => path.relative(out, f).split(path.sep).join("/")).filter(f => f === "index.html" || f.endsWith("/index.html")));
+for (const file of htmlFiles) {
   let html = await fs.readFile(file, "utf8");
   const relative = (path.relative(path.dirname(file), out) || ".")
     .split(path.sep)
@@ -96,6 +99,7 @@ for (const file of (await files(out)).filter((f) => f.endsWith(".html"))) {
     "</body>",
     `<script defer data-pocket-runtime src="${relative}/assets/pocket-runtime.js"></script></body>`,
   );
+  if (native) html = prepareNativePage(html, path.relative(out, file).split(path.sep).join("/"), indexFiles);
   await fs.writeFile(file, html);
 }
 await fs.writeFile(

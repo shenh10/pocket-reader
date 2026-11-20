@@ -1,5 +1,11 @@
 export const PUBLIC_SITE = "https://shenhan.cc/pocket-reader/";
-export function routeFromLink(value, localBase) {
+export function localPageUrl(value, localBase, native = false) {
+  const url = new URL(value, localBase), base = new URL(localBase);
+  if (native && url.protocol === base.protocol && url.host === base.host && url.pathname.startsWith(base.pathname) && url.pathname.endsWith("/"))
+    url.pathname += "index.html";
+  return url;
+}
+export function routeFromLink(value, localBase, native = false) {
   try {
     const input = new URL(value),
       base = new URL(localBase);
@@ -26,7 +32,7 @@ export function routeFromLink(value, localBase) {
       )
         return null;
     }
-    const target = new URL(route, base);
+    const target = localPageUrl(route, base, native);
     if (!target.href.startsWith(base.href)) return null;
     const date = input.searchParams.get("date");
     if (

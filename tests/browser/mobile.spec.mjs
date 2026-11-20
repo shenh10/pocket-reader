@@ -192,3 +192,26 @@ test("installed UI reads the deployed Supabase service", async ({ page }) => {
   await expect(page.locator(".prCard").first()).toBeVisible({ timeout: 20000 });
   await page.screenshot({ path: "test-results/mobile-live-daily.png" });
 });
+
+
+test("Capacitor directory navigation opens the styled daily document", async ({page}) => {
+  await dataRoutes(page);
+  await page.goto("/native/");
+  await expect(page.locator("#digest-count")).toHaveText("1");
+  // This browser is not a native platform: the dynamic directory link exercises
+  // the legacy-directory guard under the same root fallback as Capacitor.
+  await page.locator("#digest-link").click();
+  await expect(page).toHaveURL(/native\/ai-infra-board\/index\.html\?date=/);
+  await expect(page).toHaveTitle("AI Infra Merge Board");
+  await expect(page.locator(".prCard").first()).toBeVisible();
+  await expect(page.locator(".topBand")).toHaveCSS("display", "grid");
+  expect(await page.evaluate(() => [...document.styleSheets].some(s => s.href?.includes('/ai-infra-board/assets/') && s.cssRules.length > 0))).toBe(true);
+  await noOverflow(page);
+  await page.screenshot({path:"test-results/native-daily-styled.png"});
+  await page.goto("/native/ai-infra-board/?date=" + date);
+  await expect(page).toHaveURL(/ai-infra-board\/index\.html\?date=/);
+  await expect(page.locator(".topBand")).toHaveCSS("display", "grid");
+  await page.goto("/native/nvidia-docs/kernels/");
+  await expect(page).toHaveURL(/kernels\/index\.html/);
+  await expect(page).not.toHaveTitle(/Pocket Reader/);
+});

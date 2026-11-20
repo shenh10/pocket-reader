@@ -13,7 +13,7 @@ concurrency:
 jobs:
   android:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -43,6 +43,31 @@ jobs:
         env:
           JPUSH_APP_KEY: ${{ secrets.JPUSH_APP_KEY }}
         run: ./gradlew --no-daemon assembleDebug
+      - name: Enable Android emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Verify styles in the installed Android WebView
+        env:
+          JPUSH_APP_KEY: ${{ secrets.JPUSH_APP_KEY }}
+        uses: reactivecircus/android-emulator-runner@v2.38.0
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          disable-animations: true
+          script: |
+            bash scripts/test-android-webview.sh
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: android-webview-checks
+          path: |
+            android/app/build/reports/androidTests/
+            android/app/build/outputs/androidTest-results/
+            test-results/android/
       - uses: actions/upload-artifact@v7
         with:
           name: pocket-reader-android-debug

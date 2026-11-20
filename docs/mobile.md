@@ -61,7 +61,7 @@ Pages workflow 只安装前端依赖并运行 `npm run build:web`。每日采集
 
 HTTPS 链接可分享为网站地址，但 Universal Links / Android App Links 的域名关联尚未配置；普通 HTTPS 链接会打开网页。
 
-**本版本没有启用远程推送。** 设置页明确显示“待开放”，不请求通知权限。国内 Android 需要选定推送服务并接入华为、小米、OPPO、vivo 等厂商通道；iOS 需要 APNs 凭据。没有使用仅依赖 FCM 的方案。
+**推送通道尚待凭据配置。** 设置页明确显示待配置；服务端与原生客户端已接入，详见 [投递与更新](mobile-delivery.md)。国内 Android 需要选定推送服务并接入华为、小米、OPPO、vivo 等厂商通道；iOS 需要 APNs 凭据。没有使用仅依赖 FCM 的方案。
 
 预留可选原生 `PocketPush` 插件约定（尚未实现原生 SDK）：
 
@@ -70,3 +70,7 @@ HTTPS 链接可分享为网站地址，但 Universal Links / Android App Links �
 - JS 入口 `window.PocketReader.handleNotification(payload)` 校验白名单、日期和目标路径；不接受任意外部地址。
 
 真正上线推送还需设备 token 接口、取消订阅、通知偏好、定时投递与失败重试。当前日报生成/数据库服务可继续作为内容源。
+
+## Native page paths
+
+Capacitor 8 serves the root document for extensionless URLs, including `/ai-infra-board/`. Native builds therefore emit explicit `index.html` links; tabs and notification routes use the same convention. A pre-asset redirect in the root document repairs legacy directory URLs and paths restored by live updates. The native preview reproduces Capacitor’s fallback instead of automatically serving directory indexes. CI also opens the installed Android APK in an emulator and asserts that the daily stylesheet has CSS rules and produces the expected layout.
