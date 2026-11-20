@@ -7,4 +7,4 @@ collect_results() {
   adb logcat -d > test-results/android/logcat.txt || true
 }
 trap collect_results EXIT
-./android/gradlew -p android --no-daemon connectedDebugAndroidTest
+./android/gradlew -p android --no-daemon :app:connectedDebugAndroidTest
