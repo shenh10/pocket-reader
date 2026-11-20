@@ -31,3 +31,15 @@ jobs:
           npm ci
           npm run db:setup
           npm run catch-up
+      - name: Enqueue the latest issue and deliver device notifications
+        working-directory: ai-infra-board
+        env:
+          DATABASE_URL: ${{ secrets.AI_INFRA_DATABASE_URL }}
+          DATABASE_SSL: "true"
+          TIMEZONE: Asia/Shanghai
+          JPUSH_APP_KEY: ${{ secrets.JPUSH_APP_KEY }}
+          JPUSH_MASTER_SECRET: ${{ secrets.JPUSH_MASTER_SECRET }}
+          APNS_KEY_ID: ${{ secrets.APNS_KEY_ID }}
+          APNS_TEAM_ID: ${{ secrets.APNS_TEAM_ID }}
+          APNS_PRIVATE_KEY: ${{ secrets.APNS_PRIVATE_KEY }}
+        run: npm run push:flush -- --enqueue-latest

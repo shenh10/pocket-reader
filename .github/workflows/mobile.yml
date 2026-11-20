@@ -2,7 +2,7 @@ name: Build Pocket Reader Mobile
 on:
   workflow_dispatch:
   push:
-    branches: [main, "linzhao/mobile-pocket-reader"]
+    branches: [main, "linzhao/push-and-web-updates"]
   pull_request:
     branches: [main]
 permissions:
@@ -40,6 +40,8 @@ jobs:
         run: npm run mobile:sync
       - name: Build Android debug APK
         working-directory: android
+        env:
+          JPUSH_APP_KEY: ${{ secrets.JPUSH_APP_KEY }}
         run: ./gradlew --no-daemon assembleDebug
       - uses: actions/upload-artifact@v7
         with:
@@ -75,3 +77,20 @@ jobs:
           path: |
             playwright-report/
             test-results/
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm ci --prefix ai-infra-board
+          npm ci --prefix stockarena
+      - name: Bundle iOS application
+        run: npm run mobile:sync:ios
+      - name: Compile iOS simulator app
+        run: xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath work/ios-build CODE_SIGNING_ALLOWED=NO build

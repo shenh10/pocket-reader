@@ -3,7 +3,27 @@
   "appName": "Pocket Reader",
   "webDir": "_mobile",
   "backgroundColor": "#f4f2e9",
-  "android": { "backgroundColor": "#f4f2e9" },
-  "ios": { "contentInset": "never", "backgroundColor": "#f4f2e9" },
-  "plugins": { "StatusBar": { "style": "LIGHT", "backgroundColor": "#f4f2e9" } }
+  "android": {
+    "backgroundColor": "#f4f2e9"
+  },
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#f4f2e9"
+  },
+  "plugins": {
+    "StatusBar": {
+      "style": "LIGHT",
+      "backgroundColor": "#f4f2e9"
+    },
+    "CapacitorUpdater": {
+      "autoUpdate": false,
+      "statsUrl": "",
+      "updateUrl": "",
+      "channelUrl": "",
+      "publicKey": "-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEAvuIzsyfmcdt70elRJMQT/GFF3jHMYgnmZ9PnF70ySUwCGrZhZhJp\nGNP1dXD19AndrcPEli6sX0CD94zhcYL/SyE/1wp95m2apaCLjsKOwbCJz+uHwv4C\n0jlMAJGX4b4XubuJNVpa3vI6xV1FzftTVtQ4TjwQlphdsnGHCt/6hD+QGlQvq12u\nb/K/aHzsZKmEuzwd1Tvxeil6Zr8F8DjzHXO60VeaTubX02H1ggmkgaQql/puMMsR\nB1vWhA2kmkCkPpucaNNV1GOq/4wX571PKRETg9kbTsZKMM3Eb0YzGSmmpd9S2u8M\nY/fjTSHq/QRdFTkDuqFEaw3mJl2sop2YJwIDAQAB\n-----END RSA PUBLIC KEY-----\n",
+      "resetWhenUpdate": true,
+      "keepUrlPathAfterReload": true,
+      "appReadyTimeout": 20000
+    }
+  }
 }

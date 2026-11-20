@@ -1,6 +1,6 @@
 {
   "name": "pocket-reader",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -17,21 +17,24 @@
     "mobile:ios": "cap open ios",
     "preview": "node scripts/preview.mjs",
     "test:browser": "playwright test",
-    "build:service": "node scripts/build-edge.mjs"
+    "build:service": "node scripts/build-edge.mjs",
+    "build:update": "node scripts/publish-update.mjs"
   },
   "dependencies": {
-    "@capacitor/core": "8.6.2",
     "@capacitor/android": "8.6.2",
-    "@capacitor/ios": "8.6.2",
     "@capacitor/app": "^8.1.2",
     "@capacitor/browser": "^8.0.0",
+    "@capacitor/core": "8.6.2",
+    "@capacitor/ios": "8.6.2",
     "@capacitor/preferences": "^8.0.0",
     "@capacitor/share": "^8.0.0",
-    "@capacitor/status-bar": "^8.0.0"
+    "@capacitor/status-bar": "^8.0.0",
+    "@capgo/capacitor-updater": "8.54.2",
+    "@pocket-reader/push": "file:packages/pocket-push"
   },
   "devDependencies": {
     "@capacitor/cli": "8.6.2",
-    "esbuild": "^0.25.12",
-    "@playwright/test": "^1.58.0"
+    "@playwright/test": "^1.58.0",
+    "esbuild": "^0.25.12"
   }
 }
