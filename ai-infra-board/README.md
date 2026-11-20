@@ -1,3 +1,5 @@
+> Pocket Reader 网页与移动端现已通过 Supabase Edge API 读取数据库，采集任务与前端发布分离。部署说明见 [移动端与服务架构](../docs/mobile.md)。下文的静态导出命令保留用于归档，不是 App 的数据来源。
+
 # AI Infra Merge Board
 
 Local dashboard for merged PRs in AI infrastructure repositories. It fetches daily GitHub PRs, archives them in Postgres, scores them by importance, and adds Chinese reading/evaluation comments covering motivation, before/after behavior, rationale, and experiment evidence.
@@ -118,7 +120,7 @@ AI_INFRA_DATABASE_URL=postgresql://.../postgres?sslmode=no-verify
 AI_INFRA_GITHUB_TOKEN=github_pat_...  # optional; falls back to github.token
 ```
 
-The workflow lives at `../.github/workflows/pages.yml` and runs daily at
+The legacy export can be run manually. Collection now lives at `../.github/workflows/daily.yml` and runs daily at
 09:15 Asia/Shanghai, on manual dispatch, and on pushes to `main`. For the first
 publish, run the workflow manually with `backfill=true` to fetch the recent
 half-year before deploying. Scheduled runs use `catch-up`. A plain static HTTP

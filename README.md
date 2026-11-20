@@ -60,3 +60,7 @@ http://127.0.0.1:5175/nvidia-docs/
 http://127.0.0.1:5175/ai-infra-board/
 http://127.0.0.1:5175/stockarena/
 ```
+
+## Mobile reader and content service
+
+The shared website and Capacitor Android/iOS apps read daily content from a Supabase Edge API. Daily collection is a separate workflow; no reports are packaged into the app. See [mobile development and deployment](docs/mobile.md).

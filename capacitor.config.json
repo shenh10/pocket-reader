@@ -1,0 +1,9 @@
+{
+  "appId": "cc.shenhan.pocketreader",
+  "appName": "Pocket Reader",
+  "webDir": "_mobile",
+  "backgroundColor": "#f4f2e9",
+  "android": { "backgroundColor": "#f4f2e9" },
+  "ios": { "contentInset": "never", "backgroundColor": "#f4f2e9" },
+  "plugins": { "StatusBar": { "style": "LIGHT", "backgroundColor": "#f4f2e9" } }
+}

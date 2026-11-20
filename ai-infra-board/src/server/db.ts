@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { Pool } from "pg";
+import pg from "pg";
+const { Pool } = pg;
 import {
   AnnualHighlightRecord,
   AnnualHighlightsResponse,
@@ -587,15 +588,16 @@ export async function exportStaticDataset(options: {
   return { path: outputPath, days: days.length, prs: prCount, generatedAt };
 }
 
-export async function getDashboard(date: string, compact = false): Promise<DashboardResponse> {
-  // Static exports use the saved evaluations and do not transfer large raw payloads or bodies.
-  const columns = compact ? `
+const compactPrColumns = `
     pr.id, pr.repo_id, pr.number, pr.github_id, pr.title, NULL::text AS body,
     pr.url, pr.author, pr.author_avatar_url, pr.merged_at, pr.created_at, pr.updated_at,
     pr.base_ref, pr.head_ref, pr.additions, pr.deletions, pr.changed_files, pr.labels,
     pr.category, pr.importance, pr.importance_reason, pr.learning_comment,
     pr.motivation, pr.previous_behavior, pr.new_behavior, pr.rationale, pr.experiment_effect
-  ` : "pr.*";
+  `;
+
+export async function getDashboard(date: string, compact = false): Promise<DashboardResponse> {
+  // Static exports use the saved evaluations and do not transfer large raw payloads or bodies.
   const [snapshots, repos, prs] = await Promise.all([
     pool.query(
       `
@@ -609,7 +611,7 @@ export async function getDashboard(date: string, compact = false): Promise<Dashb
     pool.query(
       `
         SELECT
-          ${columns},
+          ${compact ? compactPrColumns : "pr.*"},
           r.full_name,
           r.display_name,
           r.importance_weight AS repo_importance_weight,
@@ -662,11 +664,11 @@ export async function getDashboard(date: string, compact = false): Promise<Dashb
   };
 }
 
-export async function getTimeline(startDate: string, endDate: string, limit = 600): Promise<TimelineResponse> {
+export async function getTimeline(startDate: string, endDate: string, limit = 600, offset = 0, compact = false): Promise<TimelineResponse> {
   const result = await pool.query(
     `
       SELECT
-        pr.*,
+        ${compact ? compactPrColumns : "pr.*"},
         r.full_name,
         r.display_name,
         r.importance_weight AS repo_importance_weight,
@@ -678,10 +680,10 @@ export async function getTimeline(startDate: string, endDate: string, limit = 60
       JOIN repositories r ON r.id = pr.repo_id
       LEFT JOIN pr_user_state state ON state.pr_id = pr.id
       WHERE pr.snapshot_date BETWEEN $1 AND $2
-      ORDER BY pr.merged_at DESC
-      LIMIT $3
+      ORDER BY pr.merged_at DESC, pr.id DESC
+      LIMIT $3 OFFSET $4
     `,
-    [startDate, endDate, limit]
+    [startDate, endDate, limit, offset]
   );
   const prs = result.rows.map(toPullRequestRecord);
   return {
@@ -708,14 +710,14 @@ function toAnnualHighlightRecord(row: Record<string, unknown>): AnnualHighlightR
   return record;
 }
 
-export async function getAnnualHighlights(year: number, limit = 60): Promise<AnnualHighlightsResponse> {
+export async function getAnnualHighlights(year: number, limit = 60, publicContent = false): Promise<AnnualHighlightsResponse> {
   const startDate = `${year}-01-01`;
   const endDate = `${year}-12-31`;
   const result = await pool.query(
     `
       WITH scored AS (
         SELECT
-          pr.*,
+          ${publicContent ? compactPrColumns : "pr.*"},
           r.full_name,
           r.display_name,
           r.importance_weight AS repo_importance_weight,
@@ -736,7 +738,7 @@ export async function getAnnualHighlights(year: number, limit = 60): Promise<Ann
             + LEAST(COALESCE(pr.changed_files, 0), 40) * 0.35
             + LEAST(COALESCE(pr.additions, 0) + COALESCE(pr.deletions, 0), 4000) * 0.004
             + CASE WHEN pr.experiment_effect NOT LIKE '未在 PR%' THEN 12 ELSE 0 END
-            + CASE WHEN COALESCE(state.is_favorite, false) THEN 15 ELSE 0 END
+            + ${publicContent ? '0' : 'CASE WHEN COALESCE(state.is_favorite, false) THEN 15 ELSE 0 END'}
           ) AS highlight_score
         FROM pull_requests pr
         JOIN repositories r ON r.id = pr.repo_id

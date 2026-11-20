@@ -1,0 +1,33 @@
+name: Collect Daily Content
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 1 * * *"
+permissions:
+  contents: read
+concurrency:
+  group: daily-content
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Update database for the content API
+        working-directory: ai-infra-board
+        env:
+          DATABASE_URL: ${{ secrets.AI_INFRA_DATABASE_URL }}
+          DATABASE_SSL: "true"
+          DATABASE_POOL_MAX: "8"
+          GITHUB_TOKEN: ${{ secrets.AI_INFRA_GITHUB_TOKEN || github.token }}
+          TIMEZONE: Asia/Shanghai
+          ENABLE_DESKTOP_NOTIFICATIONS: "false"
+        run: |
+          test -n "$DATABASE_URL"
+          npm ci
+          npm run db:setup
+          npm run catch-up
