@@ -7,7 +7,7 @@ android {
         applicationId "cc.shenhan.pocketreader"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 3
+        versionCode 4
         versionName "0.3.0"
         manifestPlaceholders = [JPUSH_APPKEY: System.getenv("JPUSH_APP_KEY") ?: "000000000000000000000000", JPUSH_CHANNEL: "pocket-reader"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

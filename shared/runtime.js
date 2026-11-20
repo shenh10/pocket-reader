@@ -8,7 +8,7 @@ import { startPush } from "./push-client.js";
 import { startUpdates } from "./live-updates.js";
 import { contentCache } from "./content-client.js";
 import { readService } from "./service-client.js";
-import { routeFromLink, publishedUrl, PUBLIC_SITE } from "./routes.js";
+import { routeFromLink, publishedUrl, PUBLIC_SITE, localPageUrl } from "./routes.js";
 const script = document.currentScript;
 const base = new URL("../", script.src);
 const native = Capacitor.isNativePlatform();
@@ -71,7 +71,7 @@ nav.className = "pr-nav";
 nav.setAttribute("aria-label", "主要导航");
 for (const [key, route, title] of tabs) {
   const a = document.createElement("a");
-  a.href = new URL(route, base);
+  a.href = localPageUrl(route, base, native);
   a.innerHTML = svg(key) + `<span>${title}</span>`;
   if (
     (key === "home" && home) ||
@@ -159,9 +159,10 @@ if (home) {
         data.latest.repoCount;
       document.getElementById("digest-description").textContent =
         `${data.latestDate} · 从每日合并记录中，找出值得理解的变化。`;
-      document.getElementById("digest-link").href = new URL(
+      document.getElementById("digest-link").href = localPageUrl(
         "ai-infra-board/?date=" + data.latestDate,
         base,
+        native,
       );
     })
     .catch(
@@ -201,7 +202,7 @@ if (settings) {
     .addEventListener("click", () => share(PUBLIC_SITE, "Pocket Reader"));
 }
 async function handleLink(value) {
-  const target = routeFromLink(value, base.href);
+  const target = routeFromLink(value, base.href, native);
   if (target && target !== location.href) location.assign(target);
 }
 window.PocketReader = {
@@ -245,6 +246,12 @@ if (native) {
     const a = event.target.closest?.("a[href]");
     if (!a || event.defaultPrevented || a.hasAttribute("download")) return;
     const url = new URL(a.href);
+    const local = localPageUrl(url, base, true);
+    if (local.href !== url.href) {
+      event.preventDefault();
+      location.assign(local.href);
+      return;
+    }
     if (
       ["http:", "https:"].includes(url.protocol) &&
       url.origin !== location.origin
