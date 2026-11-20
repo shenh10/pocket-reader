@@ -47,3 +47,9 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Verify published mobile update
+        run: node scripts/verify-live-update.mjs
