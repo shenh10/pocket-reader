@@ -14,7 +14,7 @@ Deno.serve(
     days: () => listSnapshots(10000),
     dashboard: (date) => getDashboard(date, true),
     timeline: (start, end, limit, offset) =>
-      getTimeline(start, end, limit, offset),
+      getTimeline(start, end, limit, offset, true),
     highlights: (year, limit) => getAnnualHighlights(year, limit, true),
   }),
 );

@@ -47,6 +47,7 @@ jobs:
       - name: Build website for browser checks
         run: |
           npm run build:web
+          node scripts/check-bundle.mjs
           npx playwright install --with-deps chromium
       - name: Check mobile reading flows
         run: npx playwright test

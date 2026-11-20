@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { Pool } from "pg";
+import pg from "pg";
+const { Pool } = pg;
 import {
   AnnualHighlightRecord,
   AnnualHighlightsResponse,
@@ -587,15 +588,16 @@ export async function exportStaticDataset(options: {
   return { path: outputPath, days: days.length, prs: prCount, generatedAt };
 }
 
-export async function getDashboard(date: string, compact = false): Promise<DashboardResponse> {
-  // Static exports use the saved evaluations and do not transfer large raw payloads or bodies.
-  const columns = compact ? `
+const compactPrColumns = `
     pr.id, pr.repo_id, pr.number, pr.github_id, pr.title, NULL::text AS body,
     pr.url, pr.author, pr.author_avatar_url, pr.merged_at, pr.created_at, pr.updated_at,
     pr.base_ref, pr.head_ref, pr.additions, pr.deletions, pr.changed_files, pr.labels,
     pr.category, pr.importance, pr.importance_reason, pr.learning_comment,
     pr.motivation, pr.previous_behavior, pr.new_behavior, pr.rationale, pr.experiment_effect
-  ` : "pr.*";
+  `;
+
+export async function getDashboard(date: string, compact = false): Promise<DashboardResponse> {
+  // Static exports use the saved evaluations and do not transfer large raw payloads or bodies.
   const [snapshots, repos, prs] = await Promise.all([
     pool.query(
       `
@@ -609,7 +611,7 @@ export async function getDashboard(date: string, compact = false): Promise<Dashb
     pool.query(
       `
         SELECT
-          ${columns},
+          ${compact ? compactPrColumns : "pr.*"},
           r.full_name,
           r.display_name,
           r.importance_weight AS repo_importance_weight,
@@ -662,11 +664,11 @@ export async function getDashboard(date: string, compact = false): Promise<Dashb
   };
 }
 
-export async function getTimeline(startDate: string, endDate: string, limit = 600, offset = 0): Promise<TimelineResponse> {
+export async function getTimeline(startDate: string, endDate: string, limit = 600, offset = 0, compact = false): Promise<TimelineResponse> {
   const result = await pool.query(
     `
       SELECT
-        pr.*,
+        ${compact ? compactPrColumns : "pr.*"},
         r.full_name,
         r.display_name,
         r.importance_weight AS repo_importance_weight,
@@ -715,7 +717,7 @@ export async function getAnnualHighlights(year: number, limit = 60, publicConten
     `
       WITH scored AS (
         SELECT
-          pr.*,
+          ${publicContent ? compactPrColumns : "pr.*"},
           r.full_name,
           r.display_name,
           r.importance_weight AS repo_importance_weight,

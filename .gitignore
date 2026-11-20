@@ -15,3 +15,4 @@ android/build/
 *.keystore
 *.jks
 ai-infra-board/supabase/functions/pocket-reader/index.ts
+deno.lock

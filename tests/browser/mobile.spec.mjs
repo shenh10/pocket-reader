@@ -151,3 +151,24 @@ test("web shell survives a fully offline reload at the Pages subpath", async ({
   await page.getByRole("link", { name: "设置", exact: true }).click();
   await expect(page.locator("#reading-size")).toBeVisible();
 });
+
+test("installed UI reads the deployed Supabase service", async ({ page }) => {
+  const api =
+    "https://rihzdwrefdjruzgdtasb.supabase.co/functions/v1/pocket-reader/v1/";
+  const response = await page.request.get(api + "summary");
+  expect(response.ok()).toBeTruthy();
+  const live = await response.json();
+  expect(live.latest.prCount).toBeGreaterThan(0);
+  await page.goto("/native/");
+  await expect(page.locator("#digest-count")).toHaveText(
+    live.latest.prCount.toLocaleString(),
+    { timeout: 20000 },
+  );
+  await page.screenshot({
+    path: "test-results/mobile-live-home.png",
+    fullPage: true,
+  });
+  await page.locator("#digest-link").click();
+  await expect(page.locator(".prCard").first()).toBeVisible({ timeout: 20000 });
+  await page.screenshot({ path: "test-results/mobile-live-daily.png" });
+});
