@@ -1,0 +1,210 @@
+{
+  "reviewed_on": "2026-11-16",
+  "policy": "Blog observations, editor synthesis and proposed experiments are separate; linked new implementations are not independently audited; no GPU reproduction.",
+  "read": [
+    {
+      "id": "autotuner",
+      "title": "FlashInfer Autotuner v2: Tune the Way You Serve",
+      "url": "https://flashinfer.ai/2026/09/22/autotuner-v2.html",
+      "author": "Yang Xu 等 / FlashInfer",
+      "published": "2026-09-22",
+      "kind": "项目原作者博客",
+      "topic": "第一优先 · 测量与后端选择",
+      "distillation": "作者把 tactic 的选择目标分成完整 eager 调用与 CUDA Graph replay：候选实现的 host 开销不同，单看 device time 会排错名次。缓存还要记录运行环境、操作形状、layout/量化等配置和计时策略。",
+      "lesson": "我的提炼：任何“最快 kernel”结论都必须先写清调用边界；缓存命中也需要有效性条件。",
+      "boundary": "这是作者对 v2 的设计和实验报告，尚未在本站固定的 FlashInfer 2025-11-19 快照中验证；该旧快照不能证明 v2 行为。",
+      "experiment": "拟做：同一 shape 分别测 device、eager 和 Graph replay，报告 tactic 排名、相对最优候选的 regret、首次编译/调优与热缓存成本；再追踪 vLLM/SGLang 实际采用的 backend。",
+      "links": [
+        {
+          "title": "作者所链接 PR #3861（相关源码路径已核对，见后续专题）",
+          "url": "https://github.com/flashinfer-ai/flashinfer/pull/3861"
+        },
+        {
+          "title": "作者所链接 RFC #3920",
+          "url": "https://github.com/flashinfer-ai/flashinfer/issues/3920"
+        }
+      ],
+      "case": "paged-decode.html",
+      "accessed_on": "2026-11-16",
+      "read_status": "已读取正文相关设计、实现与实验段落",
+      "verification": "2026-11-20: selected source paths audited in execution-path.html; no GPU reproduction; original note snapshot retained below.",
+      "capture_sha256": "d692a38c7056e68318640e2580a17ab374edab6e3d082dad64425121a4b07c2b",
+      "followup": {
+        "case": "execution-path.html",
+        "status": "measurement/cache source checked at merge 3a75b4e3; no GPU reproduction"
+      }
+    },
+    {
+      "id": "pingpong",
+      "title": "Optimization diaries: S/P ping-pong for FlashAttention-4 decode",
+      "url": "https://research.colfax-intl.com/optimization-diaries-s-p-ping-pong-for-flashattention-4-decode/",
+      "author": "Colfax Research",
+      "published": "2026-09-07",
+      "kind": "实现者技术博客",
+      "topic": "Attention · 流水线与缓冲区生命周期",
+      "distillation": "文章利用 decode 路径闲置的第二个 TMEM 槽，让下一块 QK 与当前 softmax 重叠。实现同时改变 K/V 加载顺序，并分别跟踪槽位和 barrier phase；PV 仍须等待 P 可用和 O accumulator 释放。",
+      "lesson": "我的提炼：读双缓冲时，要分别画数学依赖和存储复用依赖；“没有数学依赖”并不等于可以无同步覆盖缓冲区。",
+      "boundary": "作者报告 B200 上部分 head_dim=64/128、GQA 16:1/16:2 decode 配置的带宽提升最高约 16%；不是所有 shape 的收益，也不是服务端到端加速。",
+      "experiment": "拟做：固定 PR 前后 commit，扫 KV 长度、query 长度与 GQA；先测正确性和延迟，再用 IKET 检查 QK/softmax 是否重叠、PV 是否仍阻塞在 O 上。",
+      "links": [
+        {
+          "title": "实现 PR #2817（相关源码路径已核对，见后续专题）",
+          "url": "https://github.com/Dao-AILab/flash-attention/pull/2817"
+        },
+        {
+          "title": "pipeline 契约（现有案例快照）",
+          "url": "https://github.com/Dao-AILab/flash-attention/blob/fbe15683a881743c2625b931cc4abcc107b43154/flash_attn/cute/flash_fwd_sm100.py#L858-L931"
+        }
+      ],
+      "case": "blackwell-attention.html",
+      "accessed_on": "2026-11-16",
+      "read_status": "已读取正文相关设计、实现与实验段落",
+      "verification": "2026-11-20: selected source paths audited in fa4-ping-pong.html; no GPU reproduction; original note snapshot retained below.",
+      "capture_sha256": "ecc63169076872ae1dcb4d1c06c917d1f42951b7a12056cea6c69408e5fca9cb",
+      "followup": {
+        "case": "fa4-ping-pong.html",
+        "status": "core path checked at PR head a93c9a8f; PR open; no GPU reproduction"
+      }
+    },
+    {
+      "id": "sonicmoe",
+      "title": "SonicMoE: A Hardware-Efficient and Software-Extensible Blueprint for Fine-Grained MoEs",
+      "url": "https://tridao.me/blog/2026/sonicmoe-blackwell/",
+      "author": "Tri Dao 博客 / SonicMoE 团队",
+      "published": null,
+      "kind": "项目原作者博客",
+      "topic": "MoE · 训练激活内存与 IO",
+      "distillation": "细粒度专家会放大按 top-k 展开的中间张量。作者通过运行时 gather、融合激活，并重排 routing-weight 梯度的收缩顺序，避免为 backward 缓存大块专家输出；无需为此重算该 GEMM。",
+      "lesson": "我的提炼：先检查哪些中间结果有必要物化，再优化 GEMM；“少保存一个大张量”可能比提高局部 TFLOPS 更有价值。",
+      "boundary": "文中内存随粒度不变的比较固定 T、d 和 n×top-k；实验聚焦单 GPU、EP=1 的 MoE 层训练，不能直接推导多机推理收益。页面未核实到精确发布日期。",
+      "experiment": "拟做：推导并数值核对 routing-weight 梯度等价式，按张量列出生命周期和读写字节，再比较 varlen-M/varlen-K grouped GEMM；同时报告 forward、backward 和峰值内存。",
+      "links": [
+        {
+          "title": "论文 arXiv:2512.14080（正文待单独审阅）",
+          "url": "https://arxiv.org/abs/2512.14080"
+        },
+        {
+          "title": "SonicMoE 源码入口（待固定 commit）",
+          "url": "https://github.com/Dao-AILab/sonic-moe"
+        },
+        {
+          "title": "QuACK gather4 改动（文章所链接）",
+          "url": "https://github.com/Dao-AILab/quack/commit/e282ee6529089d32d01fc178a1043b28bbf8bb9c"
+        }
+      ],
+      "case": "fused-moe.html",
+      "accessed_on": "2026-11-16",
+      "read_status": "已读取正文相关设计、实现与实验段落",
+      "verification": "博客陈述；新增实现未独立逐行审计，GPU 结果未复现",
+      "capture_sha256": "334f640d4b2d72500fd42ae8beb156ede28e543b2ed67c5aa204e00007a96577"
+    },
+    {
+      "id": "megamoe",
+      "title": "MegaMoE in FlashInfer: Fused Expert-Parallel MoE Kernels",
+      "url": "https://flashinfer.ai/2026/09/22/mega-moe.html",
+      "author": "Anerudhan Gopal 等 / FlashInfer",
+      "published": "2026-09-22",
+      "kind": "项目原作者博客",
+      "topic": "MoE · 通信计算融合与低精度",
+      "distillation": "作者用 persistent kernel 融合 dispatch、量化、两次 grouped GEMM 和 combine，并借对称内存重叠通信计算。文中小 token/rank 场景并不总由新后端胜出；combine 的通信精度也是性能变量。",
+      "lesson": "我的提炼：比较融合收益，要把 launch、HBM 往返、通信重叠和量化分别做消融；选择阈值应随 workload 而定。",
+      "boundary": "端到端对比中的 native/fi_dg 用 MX checkpoint，fi_cutedsl 用 NVFP4 转换权重，不能当作同精度融合实验。作者的 200 题 GSM8K 检查也不能证明跨任务精度等价。",
+      "experiment": "拟做：优先建立同精度、同模型与拓扑的 split/fused 对照，扫 tokens/rank、路由偏斜和通信 dtype；分别报告 MoE 层耗时、TTFT、ITL 和模型质量。",
+      "links": [
+        {
+          "title": "FlashInfer 仓库入口（新 API 待固定 commit）",
+          "url": "https://github.com/flashinfer-ai/flashinfer"
+        },
+        {
+          "title": "program / assignment / expert 映射（现有案例快照）",
+          "url": "https://github.com/vllm-project/vllm/blob/ad7125a431e176d4161099480a66f0169609a690/vllm/model_executor/layers/fused_moe/fused_moe.py#L381-L449"
+        },
+        {
+          "title": "up/down config 与 TMA 条件（现有案例快照）",
+          "url": "https://github.com/sgl-project/sglang/blob/15d2cbcc90fc66b4d08745994cc707a45b067ffc/python/sglang/srt/layers/moe/moe_runner/triton_utils/fused_moe.py#L472-L517"
+        }
+      ],
+      "case": "fused-moe.html",
+      "accessed_on": "2026-11-16",
+      "read_status": "已读取正文相关设计、实现与实验段落",
+      "verification": "博客陈述；新增实现未独立逐行审计，GPU 结果未复现",
+      "capture_sha256": "348c44e2550c6c9d465f3a04bf3f7ca90328952959c8638aeb83efba7c70a693"
+    },
+    {
+      "id": "deepep",
+      "title": "[MoE] Deepseek的All-to-all通信: DeepEP代码解读",
+      "url": "https://www.cnblogs.com/CQzhangyu/p/18741625",
+      "author": "CQzhangyu / 博客园",
+      "published": "2025-02-27",
+      "kind": "中文社区源码分析",
+      "topic": "MoE · 旧版通信协议阅读",
+      "distillation": "文章沿旧版 Buffer → notify_dispatch → dispatch/combine，拆解 RDMA/NVLink channel、warp 职责及队列 head/tail。可学习如何追踪 token 从节点间传输到节点内转发，以及何时可以回收队列空间。",
+      "lesson": "我的提炼：读通信代码应画出数据、通知和空间回收三条路径，再核对完成语义，避免只画一条 all-to-all 箭头。",
+      "boundary": "这是 2025 年旧版 NVSHMEM 路径的二手分析，未固定原文对应 commit；不能套到本站 EPv2 ElasticBuffer/NCCL Gin 案例，也不采纳“所有场景打满带宽”之类泛化结论。",
+      "experiment": "拟做：先为原文找到对应版本，再与 EPv2 分栏比较；控制 GPU 拓扑、token 大小、路由分布及通信占用 SM，测吞吐与计算受干扰程度。",
+      "links": [
+        {
+          "title": "dispatch 接口与 stream 契约（现有案例快照）",
+          "url": "https://github.com/deepseek-ai/DeepEP/blob/b306af06afd412c88e51e71802951606e40b7358/deep_ep/buffers/elastic.py#L663-L728"
+        }
+      ],
+      "case": "expert-parallel.html",
+      "accessed_on": "2026-11-16",
+      "read_status": "已读取正文相关设计、实现与实验段落",
+      "verification": "博客陈述；新增实现未独立逐行审计，GPU 结果未复现",
+      "capture_sha256": "42820938cdb594a03e60216701c5deade45edd21ffd81fe46215faf78e43607f"
+    },
+    {
+      "id": "flashinfer02",
+      "title": "FlashInfer 0.2 - Efficient and Customizable Kernels for LLM Inference Serving",
+      "url": "https://flashinfer.ai/2024/12/16/flashinfer-v02-release.html",
+      "author": "FlashInfer Community",
+      "published": "2024-12-16",
+      "kind": "项目原作者博客",
+      "topic": "Attention · 页表到加载布局",
+      "distillation": "文章把 paged attention 放进 block/vector-sparse 的统一视角：通过加载端的 layout/stride 表达间接寻址，复用 attention 计算模板；也交代了 JIT 特化与可变长度 CUDA Graph 支持。",
+      "lesson": "我的提炼：改变 KV 存储形式时，先定位地址映射和 producer 的变化，再判断数学主体及调度是否需要改变。",
+      "boundary": "原文约 90% dense throughput 的结果限定 H100 SXM5、CUDA 12.4、head_dim=128、causal 和其 shape 集合；不是 paged attention 的固定性能折扣。它是历史设计材料。",
+      "experiment": "拟做：对齐数学工作量，扫 page_size、物理页布局、GQA 和 batch，区分页表访存、KV 加载与 split-KV 合并成本。",
+      "links": [
+        {
+          "title": "原文固定版本 benchmark",
+          "url": "https://github.com/flashinfer-ai/flashinfer/blob/d7ac8e3ddc6623572c5c0e44af9e50a4c536a76c/benchmarks/bench_hopper_attention.py"
+        },
+        {
+          "title": "split 元数据与 workspace（现有案例快照）",
+          "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/include/flashinfer/attention/scheduler.cuh#L349-L480"
+        }
+      ],
+      "case": "paged-decode.html",
+      "accessed_on": "2026-11-16",
+      "read_status": "已读取正文相关设计、实现与实验段落",
+      "verification": "博客陈述；新增实现未独立逐行审计，GPU 结果未复现",
+      "capture_sha256": "28d1b2e9af32e03bc4839a0cf74917ea4f9c666c8d5f2535d6b8278b2466f897"
+    }
+  ],
+  "candidates": [
+    {
+      "title": "DeepSeek AI Infra (3) - DeepEP的原理与代码剖析",
+      "url": "https://zhuanlan.zhihu.com/p/27777601573",
+      "reason": "候选：检查其协议时序、同步与版本分析是否足够具体。",
+      "status": "仅检索到标题/摘要；正文访问受限，未做全文蒸馏",
+      "accessed_on": "2026-11-16"
+    },
+    {
+      "title": "FlashInfer: 面向LLM推理的高效可定制Attention引擎",
+      "url": "https://zhuanlan.zhihu.com/p/2027100083150156120",
+      "reason": "候选：搜索摘要涉及 work tile 调度，待核对是否超出论文概述。",
+      "status": "仅检索到标题/摘要；正文访问受限，未做全文蒸馏",
+      "accessed_on": "2026-11-16"
+    },
+    {
+      "title": "FlashInfer: 大模型推理的高效可定制注意力后端引擎",
+      "url": "https://zhuanlan.zhihu.com/p/2010118532596269737",
+      "reason": "候选：与上一条主题重叠，全文读取后去重；不据标题评定深度。",
+      "status": "仅检索到标题/摘要；正文访问受限，未做全文蒸馏",
+      "accessed_on": "2026-11-16"
+    }
+  ],
+  "progress_reviewed_on": "2026-11-20"
+}

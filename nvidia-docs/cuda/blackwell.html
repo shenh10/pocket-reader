@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blackwell 之后的 CUDA：从硬件到 Kernel</title>
+<style>
+:root{--ink:#182019;--muted:#667169;--paper:#f3f5ef;--panel:#fff;--line:#d7ded4;--green:#70b846;--deep:#19241c;--cyan:#2d8d94;--orange:#d18332;--mono:"SFMono-Regular",Consolas,monospace;--sans:"Avenir Next","PingFang SC","Microsoft YaHei",sans-serif}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.7 var(--sans);background-image:linear-gradient(rgba(24,32,25,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(24,32,25,.045) 1px,transparent 1px);background-size:24px 24px}a{color:inherit}.wrap{width:min(1240px,calc(100% - 34px));margin:auto}.hero{background:var(--deep);color:#f2f7ef;padding:40px 0 34px;border-bottom:6px solid var(--green)}.hero h1{font-size:clamp(32px,5vw,66px);line-height:1.02;letter-spacing:-.05em;max-width:900px;margin:12px 0}.hero p{max-width:760px;color:#cbd7ca;font-size:17px}.kicker,.tag{font:12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#9bd27c}.back{color:#bbcabd;text-decoration:none}.layout{display:grid;grid-template-columns:230px 1fr;gap:34px;padding:34px 0 80px}.toc{position:sticky;top:16px;height:max-content;max-height:calc(100vh - 32px);overflow-y:auto;border-left:2px solid var(--line);padding-left:16px}.toc a{display:block;padding:7px 0;color:var(--muted);text-decoration:none}.toc a:hover{color:var(--green)}main{min-width:0}.lead{font-size:20px;line-height:1.5;max-width:860px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.card{background:var(--panel);border:1px solid var(--line);padding:20px;border-radius:10px;box-shadow:0 10px 24px rgba(20,30,20,.06)}.card h3{margin:0 0 8px;font-size:18px}.card p{margin:0;color:var(--muted)}section{margin:46px 0}h2{font-size:31px;letter-spacing:-.03em;margin:0 0 12px}h2 small{font:12px var(--mono);color:var(--green);letter-spacing:.1em}.note{border-left:4px solid var(--orange);padding:14px 18px;background:#fff8ed;margin:20px 0}.architecture{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:20px}.arch{border-top:4px solid var(--green);padding:18px;background:#fff}.arch:nth-child(2){border-color:var(--cyan)}.arch:nth-child(3){border-color:var(--orange)}.arch h3{margin:0}.arch strong{display:block;font:20px var(--mono);margin:8px 0}.arch p{color:var(--muted);margin:0}.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:20px 0}.step{padding:14px 10px;background:var(--deep);color:#e9f2e5;border-radius:7px;min-height:115px}.step b{display:block;color:#a6dc8d;font:12px var(--mono);margin-bottom:8px}.code{background:#111711;color:#e4f3df;border-radius:9px;padding:20px;overflow:auto;font:13px/1.65 var(--mono);white-space:pre}.controls{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}.controls button{border:1px solid var(--line);background:#fff;padding:9px 12px;border-radius:99px;cursor:pointer}.controls button.active{background:var(--green);border-color:var(--green);color:#10200c}.answer{padding:18px;background:#eaf3e5;border:1px solid #c4d9bd;border-radius:9px}.source{font:12px var(--mono);color:var(--muted);overflow-wrap:anywhere}.matrix{width:100%;border-collapse:collapse;background:#fff}.matrix th,.matrix td{padding:11px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.matrix th{font-size:12px;color:var(--muted);text-transform:uppercase}.footer{border-top:1px solid var(--line);padding-top:22px;color:var(--muted)}@media(max-width:850px){.layout{display:block}.toc{position:static;display:flex;gap:14px;overflow:auto;margin-bottom:28px}.toc a{white-space:nowrap}.grid,.architecture{grid-template-columns:1fr}.flow{grid-template-columns:1fr 1fr}.hero h1{font-size:42px}}@media(max-width:500px){.wrap{width:min(100% - 24px,1240px)}.flow{grid-template-columns:1fr}}
+
+.lab-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-bottom:20px}.lab-controls label{display:grid;gap:8px;font-weight:600}.lab-controls input{width:100%;min-width:0;accent-color:var(--green)}input[type=number]{padding:10px;border:1px solid var(--line);border-radius:6px;font:16px var(--mono)}.timeline-row{display:grid;grid-template-columns:58px minmax(0,1fr);gap:10px;align-items:center;margin:14px 0}.track{height:34px;background:#edf0e9;position:relative;border-radius:5px}.bar{position:absolute;height:100%;display:flex;align-items:center;justify-content:center;color:#14200f;border:1px solid #fff;border-radius:4px;font:12px var(--mono)}.bar.load{background:#e8ad64}.bar.compute{background:#93cf70}.timeline-scale{text-align:right;font:12px var(--mono);color:var(--muted);margin:8px 0 18px}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--cyan);outline-offset:4px}.table-scroll{overflow-x:auto}@media(max-width:650px){.lab-controls{grid-template-columns:1fr}.matrix{font-size:13px}.matrix td,.matrix th{padding:7px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style></head>
+<body>
+<header class="hero"><div class="wrap"><a class="back" href="../">← NVIDIA 文档入口</a><div class="kicker">CUDA FIELD GUIDE / 01</div><h1>Blackwell 之后，<br>Kernel 到底变了什么？</h1><p>一条从 SM、内存、Tensor Core 到 CUTLASS 的学习路径。先建立硬件心智模型，再决定该用 TMA、Tensor Memory、tcgen05、Block Scaling 还是 Cluster Launch Control。</p></div></header>
+<div class="wrap layout"><nav class="toc" aria-label="课程目录"><a href="#foundations">01 CUDA 基础</a><a href="#memory">02 内存与布局</a><a href="#execution">03 Streams / Graphs</a><a href="#map">04 架构地图</a><a href="#core">05 核心机制</a><a href="#pipeline">06 数据流</a><a href="#sync-contract">07 同步契约</a><a href="#pipeline-lab">08 流水线实验</a><a href="#roofline-lab">09 Roofline 实验</a><a href="#precision">10 低精度算例</a><a href="#code">11 CuTe 代码</a><a href="#evolution">12 Ultra / Rubin</a><a href="#software-stack">13 软件与编译</a><a href="#gpu-lab">14 GPU 实验</a><a href="#workloads">15 LLM 应用</a><a href="#choose">16 优化决策</a><a href="#practice">17 知识自测</a></nav><main>
+<aside class="note" aria-label="阅读路线"><b>建议这样读：</b>第一次接触 CUDA，先读 <a href="#foundations">基础概念</a>；已有 kernel 经验，从架构地图与数据流开始。想理解性能，直接动手调 <a href="#pipeline-lab">流水线</a>和 <a href="#roofline-lab">Roofline</a>；要上机验证，进入 <a href="#gpu-lab">实验</a>。本页是精讲，完整 API 检索请用 <a href="./programming-guide.html">原 CUDA 文档速查</a>。</aside><p class="lead">学习 Blackwell 最容易犯的错，是把“新指令”当成孤立的吞吐数字。真正的变化是：<b>数据搬运、累加器存放、CTA 协作和动态调度开始被硬件显式化</b>。Kernel 的性能因此从“算得快”变成“让数据和流水线一直喂饱算力”。</p>
+<aside class="note"><b>进阶：沿真实 kernel 深读。</b> 已有基础后进入 <a href="../kernels/">Kernel Atlas · Attention × MoE</a>：FlashInfer paged decode、FlashAttention SM100 流水线、vLLM/SGLang fused MoE 与 DeepEP dispatch/combine。每篇包含固定源码、索引与资源推导、可复算实验。</aside>
+<section id="foundations"><h2><small>01 / CUDA FOUNDATIONS</small><br>读懂新硬件前，先建立这六个概念</h2>
+<div class="grid">
+<article class="card"><h3>线程不是独立的小 CPU</h3><p>一个 warp 包含 32 个线程，执行 SIMT 指令。分支条件不一致会让不同路径分批执行；连续线程访问连续地址，才更容易合并内存事务。线程数量增加并不保证吞吐增加。</p></article>
+<article class="card"><h3>Block 是资源与协作单位</h3><p>同一 block 的线程通过 shared memory 交换数据，并用 block barrier 建立执行与内存顺序。不同 block 的普通执行顺序没有保证；不能在普通 kernel 中假设别的 block 已经运行。</p></article>
+<article class="card"><h3>片上容量决定并发</h3><p>每个 block 需要寄存器、shared memory 和线程槽位。任一资源耗尽，都可能限制同一个 SM 上的驻留 block 数。Occupancy 表示驻留 warp 比例，不等于 Tensor Core 利用率；更高不一定更快。</p></article>
+<article class="card"><h3>三种“异步”不要混淆</h3><p>Host 发起的 stream 操作、kernel 内 TMA 搬运、Tensor Core MMA 是不同层次的异步。CPU 提交返回、数据搬运结束和计算完成，是三个不同事件。</p></article>
+<article class="card"><h3>性能要沿依赖链测量</h3><p>用同一 stream 的 CUDA events 测 GPU 时间，并等待结束 event。Host wall time 可用于端到端延迟；只测 launch 调用返回时间，主要量到的是提交开销。</p></article>
+<article class="card"><h3>局部优化必须落到应用</h3><p>一个 GEMM 快一倍，不代表整个训练 step 快一倍。若它只占原时间的 20%，其他部分不变，总体加速只有 1/(0.8+0.2/2)≈1.11 倍。</p></article>
+</div>
+<p class="source">基础依据：<a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/">CUDA Programming Guide</a> · <a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/">CUDA Best Practices Guide</a>。这里的定量模型是教学推导，不是设备实测。</p>
+</section>
+<section id="memory"><h2><small>02 / MEMORY</small><br>内存层次：容量、复用与可见性是三件事</h2>
+<table class="matrix"><thead><tr><th>位置</th><th>用来做什么</th><th>需要警惕</th></tr></thead><tbody><tr><td>Registers</td><td>线程的地址、标量与临时值。</td><td>寄存器过多限制驻留；spill 的 local memory 不是另一块高速片上内存，通常由设备内存承载并受缓存影响。</td></tr><tr><td>Shared memory</td><td>block 内显式共享 tile，程序员控制复用。</td><td>bank conflict、同步和容量；不要把 shared-memory 空间等同于所有线程已看到新值。</td></tr><tr><td>L1 / L2</td><td>硬件缓存，减轻下一级访问。</td><td>缓存命中率依赖访问与工作集；逻辑字节流量不等于 HBM 流量。</td></tr><tr><td>Global memory</td><td>设备可访问的大数组。</td><td>合并访存、对齐与重复读取；小步长、随机索引和不规则 gather 可能浪费事务。</td></tr><tr><td>TMEM</td><td>特定 Tensor Core 路径的累加器等数据。</td><td>独立的访问指令、分配与完成规则；不能用普通 load/store 随意操作。</td></tr></tbody></table>
+<p><b>连续不等于无冲突：</b>global memory 中相邻线程读连续地址有利于 coalescing；shared memory 则要看这些地址映射到哪些 bank。例如以 32-bit word 解释、32 个 bank 的简化模型中，线程 t 读 <code>tile[t][0]</code>，行跨度为 32 words 时会落到同一 bank；跨度改为 33 words 可分散。实际数据宽度、广播、向量指令和硬件规则也要一起检查。</p>
+<p><b>Swizzle 解决的是访问布局：</b>TMA 与 MMA 对 SMEM 布局有自己的约束，不能把普通数组加一列 padding 的技巧机械套给 tensor descriptor。CuTe 的 layout 描述逻辑坐标到存储坐标的映射；改变 view 不一定搬动数据，但改变物理排列需要生产者和消费者一致理解。</p>
+<div class="note"><b>Cluster / DSM：</b>Hopper 引入的 thread-block cluster 允许受支持设备上多个 block 协作，访问 distributed shared memory。它仍然是多个 block 的 shared-memory 分区，不是无限容量共享池；远端访问前需确保相应 block 已存在，退出前需确保其他 block 不再访问。cluster 同步与 block 同步作用域不同。</div>
+<p class="source"><a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/">CUDA：Memory Hierarchy、Thread Block Clusters、Distributed Shared Memory</a> · <a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/">Best Practices：Coalescing 与 Shared Memory</a></p>
+</section>
+<section id="execution"><h2><small>03 / EXECUTION</small><br>Streams、Events 与 Graphs：优化提交和依赖</h2>
+<p>通常同一 stream 中操作遵守提交顺序；不同 stream 之间需要显式表达业务依赖。Legacy default stream 可能引入隐式同步，专门的 programmatic dependent launch 也有额外规则，不能将普通 stream 规则机械套用到所有模式。如果计算需要某次拷贝的结果，应显式用 event 等待，或放在同一条 stream 上。多 stream 提供并发机会，不保证硬件一定同时执行。</p>
+<pre class="code">// 依赖示意：省略创建、销毁和错误检查
+cudaMemcpyAsync(device_input, host_input, bytes,
+                cudaMemcpyHostToDevice, copy_stream);
+cudaEventRecord(input_ready, copy_stream);
+cudaStreamWaitEvent(compute_stream, input_ready, 0);
+kernel&lt;&lt;&lt;grid, block, 0, compute_stream&gt;&gt;&gt;(device_input);</pre>
+<p>要可靠地重叠 host↔device 拷贝与计算，通常需要 pinned host memory、非阻塞依赖结构和相应 copy engine 能力。普通 pageable memory 的 staging 行为可能影响异步效果；调用名里有 Async，不代表 host 永远不阻塞。过度使用 pinned memory 也会消耗系统资源。</p>
+<h3>CUDA Graphs 在哪里有用？</h3>
+<p>当一轮执行反复提交大量短 kernel，host launch 开销和提交空洞可能占明显比例。Graph 把操作与依赖记录成图，实例化后复用执行，从而减少重复提交成本。它不会让同一个 kernel 的 HBM 自动变快，也不会把真实依赖变成可并行。</p>
+<table class="matrix"><thead><tr><th>看到的现象</th><th>先尝试</th><th>如何验证</th></tr></thead><tbody><tr><td>短 kernel 之间有 host 提交空洞</td><td>CUDA Graphs、减少同步与重复分配。</td><td>Nsight Systems 比较图重放前后时间线及端到端延迟。</td></tr><tr><td>拷贝与计算可独立但排成串行</td><td>分 stream、显式 event、合适的 pinned buffer。</td><td>确认数据依赖正确且时间线上实际重叠。</td></tr><tr><td>长 GEMM 本身耗时占绝大多数</td><td>优化算法、shape、dtype、布局和 kernel。</td><td>Graph 的额外收益可能很小，测整体收益而非提交耗时。</td></tr></tbody></table>
+<p>动态 shape、指针生命周期、图更新与 capture 限制要按 API 规则处理。<code>cudaMallocAsync</code> 则提供 stream-ordered 分配与内存池复用；跨 stream 使用和释放仍需建立正确依赖。它不是消除所有 allocation 开销的魔法。</p>
+<p class="source"><a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/">CUDA Programming Guide：Streams、Events、CUDA Graphs</a> · <a href="https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY__POOLS.html">Runtime stream-ordered allocator</a></p>
+</section>
+<section id="map"><h2><small>04 / ARCHITECTURE MAP</small><br>先分清主要目标</h2><div class="architecture"><article class="arch"><h3>SM100 · 数据中心 Blackwell</h3><strong>sm_100a / sm_100f</strong><p>第五代 Tensor Core 的 <code>tcgen05.mma</code>、Tensor Memory（TMEM）、1SM/2SM CTA group，以及 FP4/FP6/FP8 block-scaled MMA。</p></article><article class="arch"><h3>SM120 · GeForce Blackwell</h3><strong>sm_120</strong><p>同样支持窄精度 MMA，但硬件边界不同：CUTLASS GeForce GEMM 的 cluster shape 固定为 1×1×1，不应把 SM100 的 multicast、cluster 形状和调度假设直接搬过来。</p></article><article class="arch"><h3>SM107 · Rubin（预览）</h3><strong>sm_107a / sm_107f</strong><p>CUTLASS main 已出现初步支持；所核对的 CUTLASS 4.8 说明要求 R615 驱动，明确指出 CUDA 13.4 Developer Preview 的 R610 不足以执行这些 kernel。把它当“正在演进的目标”，不要当稳定 ABI。</p></article></div><div class="note"><b>编译边界：</b><code>sm_100a</code> 这类 architecture-accelerated target 包含架构专属指令；它需要明确目标架构。数据中心 SM100 与 GeForce SM120 要分别验证。</div><p class="source">依据：<a href="https://docs.nvidia.com/cuda/cuda-programming-guide/05-appendices/compute-capabilities.html">CUDA Compute Capabilities</a> · <a href="https://github.com/NVIDIA/cutlass/blob/b2f249acd20392beeb16f5e5a31f4f1a4e38b3bd/media/docs/cpp/blackwell_functionality.md">CUTLASS Blackwell SM100/SM120</a> · <a href="https://github.com/NVIDIA/cutlass/blob/b2f249acd20392beeb16f5e5a31f4f1a4e38b3bd/README.md">CUTLASS release notes</a></p></section>
+<section id="core"><h2><small>05 / THE SIX MECHANISMS</small><br>六个机制，分别解决什么瓶颈？</h2><div class="grid"><article class="card"><h3>① TMEM：累加器搬出寄存器</h3><p>传统 MMA 的 accumulator 压在寄存器上，会挤占寄存器容量并限制并发。tcgen05 把累加器放进 Tensor Memory，寄存器可留给地址、epilogue 和其他工作。代价是 TMEM 访问也有完成与同步规则，不能当普通 shared memory 用。</p></article><article class="card"><h3>② tcgen05.mma：单线程发射</h3><p>Blackwell 的第五代 Tensor Core MMA 是异步指令，底层由单线程发射；CuTe DSL 的 cute.gemm 调用需由 warp 一致执行，编译器处理线程选举；<code>commit</code> 与 wait/fence 负责建立依赖。不要把“单线程发射”误读成“单线程计算”。</p></article><article class="card"><h3>③ TMA：多维搬运交给硬件</h3><p>TMA 从 Hopper 时代就已引入，并非 Blackwell 独有。它负责 GMEM↔SMEM 的多维 tile 拷贝，线程不再逐元素搬运。它和 pipeline/barrier 配合，把下一块数据搬运与当前块 MMA 重叠。</p></article><article class="card"><h3>④ Block Scaling：低比特也能可控</h3><p>使用 block-scaled 格式时，FP4/FP6/FP8 数据沿 K 方向的每组元素共享 scale factor；这些位宽也存在非 block-scaled 指令形式。计算形式可写成 <code>D=C+(A⊙SFA)·(B⊙SFB)</code>，其中 ⊙ 表示按相应 block 广播 scale 后逐元素相乘，· 表示矩阵乘法。精度与带宽的关键不在“4 bit”本身，而在 scale 的粒度、布局和对齐。</p></article><article class="card"><h3>⑤ CTA Group：1SM 或 2SM</h3><p><code>CtaGroup.TWO</code> 让相邻 CTA 协作完成更大的 M tile。它改变 tile partition 和 cluster 语义，CUTLASS 会帮你处理大部分切分，但你仍要选择合法的 layout 与 tile。</p></article><article class="card"><h3>⑥ Cluster Launch Control</h3><p>支持 CLC 的设备可让 persistent kernel 取消尚未启动的 block/cluster 工作，取得其索引并自行执行；不能抢走已在运行的工作，缓解不均匀 workload 的尾部空转。它适合动态 tile 调度，不是所有 GEMM 都该启用。</p></article></div></section>
+<section id="pipeline"><h2><small>06 / DATAFLOW</small><br>一块 tile 的真实旅程</h2><p>把 kernel 想成三条并行轨道：A/B 负责喂数据，C/D 负责 TMEM 累加器。性能来自重叠，而不是把每一步单独做到极致。</p><div class="flow"><div class="step"><b>GMEM</b>全局内存中的 A/B tile；尽量连续、对齐。</div><div class="step"><b>TMA → SMEM</b>异步多维拷贝；barrier 告诉消费者数据何时到齐。</div><div class="step"><b>tcgen05.mma</b>SMEM descriptor 作为输入，TMEM 保存 accumulator。</div><div class="step"><b>TMEM → RMEM</b>epilogue 需要时把结果读回寄存器，不要过早搬回。</div><div class="step"><b>GMEM</b>融合 bias/activation/scale 后写回输出。</div></div><p class="source">数据流参考：<a href="https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#tensorcore-5th-generation-family-instructions">PTX tcgen05</a> · <a href="https://docs.nvidia.com/cutlass/latest/media/docs/pythonDSL/guides/mma/tcgen05_programming.html">CUTLASS tcgen05 MMA guide</a></p></section>
+<section id="sync-contract"><h2><small>07 / SYNCHRONIZATION</small><br>最危险的错误：把“已提交”当成“已完成”</h2>
+<table class="matrix"><thead><tr><th>边界</th><th>必须建立的事实</th><th>常见错误</th></tr></thead><tbody>
+<tr><td>TMA → MMA</td><td>当前 phase 的数据事务已经完成，且消费者可见。</td><td>只等生产线程到 barrier，却没正确计入搬运完成条件。</td></tr>
+<tr><td>MMA → 复用 SMEM</td><td>异步 MMA 已消费该输入，生产者才可覆盖缓冲区。</td><td>MMA 指令发射后立刻覆盖 A/B。</td></tr>
+<tr><td>MMA → epilogue</td><td>通过 tcgen05 completion 路径确认累加完成，再读 TMEM。</td><td>以为普通 __syncthreads() 自动等完 Tensor Core 操作。</td></tr>
+<tr><td>TMEM load/store → 后续操作</td><td>使用对应的 wait；跨线程传递还要满足相关 fence 与执行同步要求。</td><td>把 TMEM 指针当成普通 shared-memory 指针。</td></tr>
+</tbody></table>
+<p>这些是需要验证的契约，不是一套可以任意拼接的汇编模板。初学优先使用 CUTLASS pipeline abstraction；读具体 kernel 时标记谁生产、谁消费、谁释放每个 stage，再对照 PTX 的 completion 与 proxy 语义。</p>
+<p class="source"><a href="https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#tensorcore-5th-generation-family-instructions">PTX 第五代 Tensor Core 指令与同步规则</a></p>
+</section>
+<section id="pipeline-lab"><h2><small>08 / PIPELINE LAB</small><br>把“搬运与计算重叠”变成可见的时间线</h2>
+<p>假设一个搬运引擎、一个计算引擎、两个输入缓冲区：搬下一块时，计算当前块。每块必须先搬完才能计算，缓冲区也必须等消费者用完才能复用。下图按这些依赖实际排程。</p>
+<div class="card">
+<div class="lab-controls"><label>Tile 数 <input id="tiles" type="range" min="1" max="12" value="6"><output id="tiles-value"></output></label><label>每块搬运时间 <input id="load-time" type="range" min="1" max="12" value="5"><output id="load-value"></output></label><label>每块计算时间 <input id="compute-time" type="range" min="1" max="12" value="8"><output id="compute-value"></output></label></div>
+<p class="source">单位为抽象时间单位；不包含 launch、barrier、epilogue、争用与带宽波动。橙色＝搬运，绿色＝计算；编号相同表示同一 tile。</p>
+<div id="pipeline-chart" aria-label="双缓冲流水线时间线"></div>
+<div class="answer" id="pipeline-result" aria-live="polite"></div>
+</div>
+<p>稳态每块耗时逼近 <code>max(搬运时间, 计算时间)</code>，不是两者相加。但首块需要填充、末块需要排空。Tile 只有一块时无法获益；两阶段均衡时，理想加速上限逼近 2 倍。</p>
+<div class="note"><b>为什么 stage 不是越多越好？</b>增加缓冲可隐藏更长延迟，却会增加 shared memory 占用，从而减少驻留 block。真正的 TMA/MMA pipeline 还要管理 full/empty barrier、phase、expected transaction bytes，以及消费者是否仍在读当前缓冲区。</div>
+</section>
+<section id="roofline-lab"><h2><small>09 / ROOFLINE LAB</small><br>Tensor Core 更快，为什么你的 kernel 没变快？</h2>
+<p>算术强度 I＝FLOPs / 从瓶颈内存层搬运的字节数。理想吞吐上界为 <code>min(计算峰值 P, 带宽 B × I)</code>。这里选的是 HBM 层；不能把 HBM 字节、L2 带宽和稀疏峰值混在同一个公式里。</p>
+<div class="card"><div class="lab-controls"><label>计算峰值 P（TFLOP/s）<input id="peak" type="number" min="1" max="100000" step="1" value="1000"></label><label>带宽 B（TB/s）<input id="bandwidth" type="number" min="0.1" max="100" step="0.1" value="8"></label><label>算术强度 I（FLOP/byte）<input id="intensity" type="number" min="0.1" max="10000" step="0.1" value="50"></label></div><div id="roofline-result" class="answer" aria-live="polite"></div></div>
+<p>先把 P 加倍，保持 B 和 I 不变：如果仍受带宽限制，理论吞吐不变。再把 I 加倍：复用与融合减少字节流量，才可能提高上界。默认数字只是教学输入，不对应某张 GPU。</p>
+<div class="note"><b>GEMM 的复用从哪里来？</b>一个 M×N 输出 tile，在 K 方向每阶段读取 A 的 M×K 和 B 的 K×N 元素，完成约 2MNK FLOPs。只计这两项读取、每元素 s 字节，强度为 2MN/[s(M+N)]。增大 M/N 提高复用，但同时增加片上资源占用；完整 kernel 还要算输出、scale、padding 和重复读取。</div>
+</section>
+<section id="precision"><h2><small>10 / PRECISION</small><br>FP4 的四个 bit 之外，还藏着什么？</h2>
+<p>以 dense block-scaled 格式为例：MXFP4 每 32 个元素共享一个 UE8M0 scale，NVFP4 每 16 个元素共享一个 UE4M3 scale。前者的 scale 是幂次形式，后者有尾数，可以更细地调节尺度。完整 NVFP4 量化配方还可能包含额外的张量级缩放；仅存储 4-bit 元素不足以定义完整量化格式。</p>
+<table class="matrix"><thead><tr><th>128 个元素</th><th>元素数据</th><th>局部 scale</th><th>最简存储量</th></tr></thead><tbody>
+<tr><td>FP16</td><td>256 B</td><td>无</td><td>256 B</td></tr>
+<tr><td>MXFP4</td><td>64 B</td><td>4 × 1 B</td><td>68 B，即 4.25 bit/element</td></tr>
+<tr><td>NVFP4</td><td>64 B</td><td>8 × 1 B</td><td>72 B，即 4.5 bit/element</td></tr></tbody></table>
+<p>这是仅计 packed 数据与局部 scale 的理想值，尚未计张量级 scale、padding、布局、对齐和中间结果。所以“FP16 换 FP4”并不自动让内存占用或端到端耗时降到四分之一。</p>
+<h3>为什么 scale 粒度会影响误差？</h3>
+<p>用一个简化的 E2M1 演示：非负可表示值为 0、0.5、1、1.5、2、3、4、6。若一组元素包含 0.1 和 12，采用最大值 / 6 的简化尺度 s=2，则 0.1/s=0.05 会量化到 0，12/s=6 则可精确表示。若把小值放到另一组并用 s=0.25，0.1/s=0.4 会量化到 0.5，反量化为 0.125。分组降低了大离群值对小值的影响，但增加了 scale 开销。</p>
+<div class="note">上述例子只解释尺度与舍入，未实现 NVFP4 的完整量化算法。FP32 accumulator 能减少累加误差，却不能恢复输入量化时已丢失的信息。验证时同时看绝对误差、相对误差与下游模型质量；参考值接近零时，单用相对误差容易误导。</div>
+<p class="source"><a href="https://github.com/NVIDIA/cutlass/blob/b2f249acd20392beeb16f5e5a31f4f1a4e38b3bd/media/docs/cpp/blackwell_functionality.md">CUTLASS block-scaled 类型与 scale 布局</a> · <a href="https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#alternate-floating-point-data-formats">PTX 浮点格式</a>。字节数与舍入例子为本页计算。</p>
+</section>
+<section id="code"><h2><small>11 / FIRST KERNEL</small><br>先读懂“描述硬件”，再读懂 GEMM</h2><pre class="code"># CuTe DSL：描述 Blackwell tcgen05 MMA
+import cutlass
+import cutlass.cute as cute
+from cutlass.cute.nvgpu import tcgen05, OperandMajorMode
+
+op = tcgen05.MmaF16BF16Op(
+    cutlass.Float16, cutlass.Float32,
+    (128, 256, 16),          # instruction shape M,N,K
+    tcgen05.CtaGroup.ONE,
+    tcgen05.OperandSource.SMEM,
+    OperandMajorMode.K, OperandMajorMode.K,
+)
+tiled_mma = cute.make_tiled_mma(op)
+
+# 主循环的关键顺序（概念代码）
+# 1. TMA: GMEM -> SMEM
+# 2. cute.gemm(tiled_mma, acc_tmem, a_smem, b_smem, acc_tmem)
+# 3. 等待 tcgen05 完成，再做 TMEM -> RMEM epilogue</pre><div class="note"><b>读法：</b>这段不是“复制粘贴就能跑”的完整 benchmark，而是把硬件契约显式标出来：输入从哪里来、accumulator 在哪里、MMA 是什么形状、CTA 是单组还是双组。完整 kernel 应使用 CUTLASS 的 builder、合法的 alignment/layout，并在目标 GPU 上编译验证。</div></section>
+<section id="evolution"><h2><small>12 / BEYOND BLACKWELL</small><br>Blackwell Ultra 与 Rubin：瓶颈如何继续移动？</h2>
+<p>下面依据固定的 CUTLASS 源码快照，而非产品宣传页：<b>2026-11-06，commit b2f249a</b>。表中的 toolkit 门槛来自该仓库的支持说明；它不保证每种指令、每个库或每个 kernel 都在最低版本中可用。</p>
+<table class="matrix"><thead><tr><th>目标</th><th>快照中的支持线索</th><th>对内核选择的意义</th></tr></thead><tbody>
+<tr><td>B200 / SM100</td><td>CC 10.0；支持表列 CUDA 12.8。</td><td>学习 tcgen05、TMEM、block scaling 的数据中心基线。</td></tr>
+<tr><td>B300 / SM103<br>Blackwell Ultra</td><td>CC 10.3；支持表列 CUDA 13.0。Sm103 复用 Sm100 的 shared-memory 容量常量和 512 列 TMEM。</td><td>不能把性能提升简单解释为“每个 SM 的 TMEM 更大”。需要重新评估具体数据类型、指令吞吐、GPU 规模与应用瓶颈。</td></tr>
+<tr><td>Rubin / SM107</td><td>CUTLASS 4.8 初步支持；576 列 TMEM；R615 是此快照声明的执行要求。</td><td>更大累加器容量、新 MMA 形状与 operand reuse 改变了 tile 和流水线搜索空间。它仍需版本固定、数值验证和实机调优。</td></tr>
+<tr><td>RTX 50 / SM120；DGX Spark / SM121</td><td>支持表分别列 CC 12.0 / 12.1、CUDA 12.8 / 13.0。</td><td>编号大不表示是 SM100 的功能超集。不能把同名架构、CC 数字与产品代际排序混为一谈。</td></tr>
+</tbody></table>
+<h3>Rubin 值得关注的四个变化</h3>
+<div class="grid"><article class="card"><h3>更多 TMEM 列</h3><p>源码把 SM100 的 512 列扩到 SM107 的 576 列，即增加 12.5%。每列 128×32 bit，分别折合 256 KiB 与 288 KiB。这增加容纳 accumulator 的可能性，但 allocator 粒度、合法 tile 和并发约束仍然存在，不能把所有列随意切给任意 CTA。</p></article>
+<article class="card"><h3>更大的 SMEM 预算</h3><p>该快照 CUTLASS 的可用容量常量为 SM100 232448 B（227 KiB）、SM107 334848 B（327 KiB）。这些是库使用的容量预算，不要直接当作硬件物理总容量。它可能允许更多 stage 或更大的输入 tile；是否更快仍取决于 occupancy 与流水线。</p></article>
+<article class="card"><h3>B collector reuse</h3><p>发布说明新增 B operand collector reuse：在适用的 MMA 序列中复用 B 操作数。它针对 Tensor Core 输入路径的重复工作，不等价于 HBM 流量自动下降。应分别看 global/shared 访问与 MMA 的实际瓶颈。</p></article>
+<article class="card"><h3>低精度与 softmax 路径</h3><p>发布说明列出更高吞吐 FP8（MMA_K=64）、FP4（MMA_K=128）、混合精度改进及 softmax 相关加速。MMA_K 是指令的归约粒度，不是应用总 K；更大的指令粒度可能增加小形状 padding，仍需比较端到端收益。</p></article></div>
+<div class="note"><b>预览支持如何使用：</b>这个版本同时记录了部分 Rubin packed arithmetic 的错误代码生成问题。请固定 toolkit、driver、CUTLASS commit，并对照该版本 Known issues；“编译成功”和“有这个架构选项”都不等于数值正确。这里不把预览支持写成已验证的生产性能。</div>
+<p class="source">可复核来源：<a href="https://github.com/NVIDIA/cutlass/blob/b2f249acd20392beeb16f5e5a31f4f1a4e38b3bd/README.md">硬件表、4.8 更新与 Known issues</a> · <a href="https://github.com/NVIDIA/cutlass/blob/b2f249acd20392beeb16f5e5a31f4f1a4e38b3bd/include/cutlass/arch/arch.h">架构资源常量</a> · <a href="https://github.com/NVIDIA/cutlass/blob/b2f249acd20392beeb16f5e5a31f4f1a4e38b3bd/include/cute/arch/tmem_capacity_sm100.hpp">TMEM 列数</a>。容量换算和性能影响是本页推导，非实测结果。</p>
+</section>
+<section id="software-stack"><h2><small>13 / SOFTWARE PATH</small><br>从需求选接口，不必一开始就写 PTX</h2>
+<table class="matrix"><thead><tr><th>目标</th><th>起点</th><th>向下深入的理由</th></tr></thead><tbody>
+<tr><td>标准矩阵乘法、常见融合</td><td>cuBLAS / cuBLASLt</td><td>先建立库基线。记录 dtype、layout、workspace、算法选择与实际形状；库没覆盖的融合或调度才是自定义 kernel 的理由。</td></tr>
+<tr><td>定制 GEMM、epilogue、grouped GEMM</td><td>CUTLASS C++ builder 或 CuTe DSL</td><td>明确 tile、布局、schedule、pipeline 与数值契约；复用已有 TMA/MMA 封装。</td></tr>
+<tr><td>通用逐元素、规约、数据组织</td><td>CUDA C++ / 合适的 kernel DSL</td><td>先检查合并访存、复用、同步、寄存器压力。普通逐元素算子不会因使用 Blackwell 就自动变成 Tensor Core kernel。</td></tr>
+<tr><td>检查具体指令与特殊硬件能力</td><td>PTX 文档、编译输出、SASS 与 profiler</td><td>确认指令真正生成、资源分配与实际瓶颈。PTX 是虚拟 ISA，不是最终执行时间的承诺。</td></tr>
+</tbody></table>
+<h3>部署时逐层检查这条链</h3>
+<pre class="code">GPU 型号 / Compute Capability
+    ↓ 硬件是否有目标指令与资源？
+驱动 + CUDA Toolkit
+    ↓ 编译器能生成、驱动能装载或 JIT？
+库版本 + 编译目标
+    ↓ 目标 kernel 是否启用？数据布局是否合法？
+数值与边界验证
+    ↓ 特殊 shape、padding、scale、尾块是否正确？
+真实 workload 的性能比较</pre>
+<p><code>compute_XX</code> 描述 PTX 虚拟目标，<code>sm_XX</code> 描述本机机器码目标。常规 PTX 的前向兼容不能直接推广到带 <code>a</code> 的架构专属特性；<code>f</code> 是家族特性的目标形式，兼容范围也必须按当前 toolkit 文档确认，不能把后缀当成可随意替换的性能开关。</p>
+<pre class="code"># 查看实际设备与编译器；不要把 nvidia-smi 的 CUDA Version
+# （驱动可支持的 CUDA 版本信息）当成已安装 nvcc 的版本。
+nvidia-smi --query-gpu=name,compute_cap,driver_version --format=csv
+nvcc --version
+nvcc --list-gpu-arch
+nvcc --list-gpu-code
+
+# 示例：专门面向支持 SM100a 的设备构建 CUTLASS。
+# 先固定 CUTLASS revision，并按对应版本的构建要求准备环境。
+cmake -S . -B build -DCUTLASS_NVCC_ARCHS=100a</pre>
+<p>若要支持多种 GPU，应提供经过验证的多目标构建或独立 kernel，并在运行时选择适配路径。保留普通 PTX fallback 的策略也不意味着专属 tcgen05 kernel 能跨代运行。</p>
+<p class="source"><a href="https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/">NVCC 编译与目标选项</a> · <a href="https://docs.nvidia.com/cuda/cublas/">cuBLAS / cuBLASLt</a> · <a href="https://github.com/NVIDIA/cutlass/blob/b2f249acd20392beeb16f5e5a31f4f1a4e38b3bd/README.md#target-architecture">CUTLASS target architecture</a></p>
+</section>
+<section id="gpu-lab"><h2><small>14 / RUN IT YOURSELF</small><br>第一个实验：建立可信的测量习惯</h2>
+<p><a href="./labs/bandwidth.cu" download>下载完整 bandwidth.cu</a>。这是一个 CUDA C++ 向量加法实验，目的是理解访存、计时与缓存，不是展示 tcgen05。需要 NVIDIA GPU、匹配的驱动和 CUDA Toolkit。当前验证环境为 Mac，无 nvcc；源码已检查，尚未在 GPU 上编译或运行，不提供虚构跑分。</p>
+<pre class="code"># 在有 NVIDIA GPU 的机器上
+nvcc -O3 -std=c++17 -arch=native bandwidth.cu -o bandwidth
+./bandwidth 1024
+./bandwidth 16777216
+./bandwidth 67108864
+compute-sanitizer --tool memcheck ./bandwidth 1025</pre>
+<p><code>-arch=native</code> 需要支持该选项的 nvcc 和构建机上可见的目标 GPU；若工具链不支持，按 <code>nvcc --list-gpu-code</code> 选择实际设备的目标。最后一组测试会占约 768 MiB 显存和相同量级的 host 内存，分配失败会报错退出。</p>
+<ol><li><b>先看 correctness：</b>输出的 mismatches 应为 0，退出码为 0。1025 这样的非 block 整数倍用于检查边界。</li><li><b>再看大小效应：</b>小数组可能主要受启动、提交或缓存影响；大数组更容易暴露数据搬运开销。重复访问同一地址可能命中 L2。</li><li><b>核对分子：</b>每元素两次 float 读取、一次写入，逻辑流量是 12N bytes。输出的 GB/s 使用十进制，排除 host↔device 拷贝。</li><li><b>核对分母：</b>同一 stream 的 start/stop event 包围 100 次 launch，再取平均。小 kernel 若因 host 提交形成 GPU 空闲，这些间隙也会计入，不能当作孤立 kernel 的最低延迟。</li><li><b>用 profiler 解释：</b>先用 Nsight Systems 看提交与空闲，再用 Nsight Compute 看实际内存流量、缓存和吞吐；不要直接把逻辑 GB/s 当成 HBM 测量值。</li></ol>
+<h3>第二步：从标准库基线走向 Blackwell GEMM</h3>
+<p>选择一个真实的 M/N/K、batch、dtype 和 layout，先测 cuBLASLt。再用官方 <a href="https://github.com/NVIDIA/cutlass/tree/b2f249acd20392beeb16f5e5a31f4f1a4e38b3bd/examples/71_blackwell_gemm_with_collective_builder">Blackwell collective builder 示例</a>复现同一问题，最后看 <a href="https://github.com/NVIDIA/cutlass/tree/b2f249acd20392beeb16f5e5a31f4f1a4e38b3bd/examples/72_blackwell_narrow_precision_gemm">窄精度 GEMM 示例</a>。保留示例自带的校验路径；不要跳过 scale 布局后只测耗时。</p>
+<p>每次只改一个维度：tile → stage 数 → epilogue 融合 → 数据类型。记录精度误差、资源占用、kernel 时间和端到端时间。若比较 dense GEMM，FLOPs 用 2MNK；不要拿稀疏峰值当分母。</p>
+</section>
+<section id="workloads"><h2><small>15 / APPLY THE MODEL</small><br>把硬件机制放回 LLM 工作负载</h2>
+<div class="grid"><article class="card"><h3>Prefill：复用与矩阵计算</h3><p>较大的 token batch 往往能提供更大的 M 维，适合 Tensor Core 与分块复用。但 attention 的 softmax、mask、布局转换和调度也可能成为瓶颈；不能只拿 GEMM 峰值预测整体 TTFT。</p></article><article class="card"><h3>Decode：权重与 KV 搬运</h3><p>小 batch 下，每次加载的权重被少量 token 使用，算术强度较低。增大 batch、量化、KV 布局与减少不必要搬运常比追逐最大 MMA 更有效。batch 增大后，瓶颈也可能转移。</p></article><article class="card"><h3>MoE：形状与不均衡</h3><p>专家收到的 token 数不同，grouped GEMM 和动态调度可能减少尾部浪费。CLC 只能帮助适配它的 kernel 内任务分配，不能消除跨 GPU all-to-all、专家热点或负载倾斜本身。</p></article></div>
+<div class="note"><b>不要跨层套结论：</b>TMA 是 GPU 内的数据搬运机制；NVLink/NCCL 面向设备间通信；CUDA Graphs 主要减少重复提交开销。它们可能互补，但不会自动替代彼此。先在时间线上定位实际空闲和数据依赖，再选工具。</div>
+</section>
+<section id="choose"><h2><small>16 / DECISION TABLE</small><br>遇到问题时怎么选？</h2><table class="matrix"><thead><tr><th>你的瓶颈</th><th>优先看</th><th>不要忽略</th></tr></thead><tbody><tr><td>GMEM→SMEM 搬运占满时间</td><td>TMA + pipeline + barrier</td><td>tile shape、descriptor、stage 数、共享内存占用</td></tr><tr><td>寄存器压力压低 occupancy</td><td>TMEM accumulator、较小 epilogue fragment</td><td>TMEM load/store wait 与同步顺序</td></tr><tr><td>模型吞吐受低精度 GEMM 限制</td><td>FP8/FP6/FP4 + block scaling</td><td>scale vector size、对齐、布局、累加精度</td></tr><tr><td>长尾 tile 让 SM 空转</td><td>persistent kernel + Cluster Launch Control</td><td>CLC pipeline、cluster 粒度和退出条件</td></tr><tr><td>要跨 GPU 运行</td><td>按设备能力、合法 dtype/layout 与工具链支持分派 kernel</td><td>SM100/SM120 的 feature 与 layout 并不等价</td></tr></tbody></table></section>
+<section id="practice"><h2><small>17 / CHECK YOUR MODEL</small><br>三道练习，检验你是否真的懂了</h2><div class="controls"><button class="active" data-a="0">练习 1</button><button data-a="1">练习 2</button><button data-a="2">练习 3</button></div><div class="answer" id="answer"><b>为什么 Blackwell 需要 TMEM？</b><br>因为 Tensor Core 的 accumulator 如果长期占寄存器，会提高 register pressure；TMEM 让累加结果有专用片上存储，但你必须把 TMEM 的异步完成与 epilogue 读回纳入流水线。</div></section>
+<footer class="footer">页面定位：教学蒸馏 + 官方跳转 + 可验证实验。硬件规格、编译目标和 CUTLASS 支持会随 CUDA/驱动更新；任何性能数字都应在目标 GPU、目标 toolkit 和实际 kernel 上重新 benchmark。<br><a href="./programming-guide.html">← 回到 CUDA 官方卡片速查</a></footer>
+</main></div>
+<script>const qs=[['为什么 Blackwell 需要 TMEM？','因为 Tensor Core 的 accumulator 如果长期占寄存器，会提高 register pressure；TMEM 让累加结果有专用片上存储，但你必须把 TMEM 的异步完成与 epilogue 读回纳入流水线。'],['SM100 与 SM120 都是 Blackwell，为什么不能直接共用 kernel？','因为产品线的 cluster、多播、布局和架构专属指令边界不同；先按 compute capability 分派，再验证 alignment、layout 与 launch policy。'],['FP4 的关键优化是什么？','不是盲目把所有数据改成 4 bit，而是选择 scale 粒度、保证数据布局和对齐，并用更高精度 accumulator 控制误差。']];document.querySelectorAll('#practice button').forEach((b,i)=>b.onclick=()=>{document.querySelectorAll('#practice button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelector('#answer').innerHTML='<b>'+qs[i][0]+'</b><br>'+qs[i][1]})</script>
+
+<script src="./learning-labs.js"></script>
+</body></html>

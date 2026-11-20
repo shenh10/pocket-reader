@@ -1,0 +1,331 @@
+{
+  "reviewed_on": "2026-11-20",
+  "policy": "Independent pinned snapshots; CPU teaching models tested; no GPU performance reproduction.",
+  "sources": [
+    {
+      "label": "vLLM 的 decode 分支条件",
+      "url": "https://github.com/vllm-project/vllm/blob/ad7125a431e176d4161099480a66f0169609a690/vllm/v1/attention/backends/flashinfer.py#L928-L931",
+      "repository": "vllm-project/vllm",
+      "commit": "ad7125a431e176d4161099480a66f0169609a690",
+      "path": "vllm/v1/attention/backends/flashinfer.py",
+      "start": 928,
+      "end": 931,
+      "sha256": "505e3fccd848a80ac922f62c1e8b19052fe2a75aef92229b3cbc6066f957bc41"
+    },
+    {
+      "label": "TRTLLMDecode / FIDecode 的构造",
+      "url": "https://github.com/vllm-project/vllm/blob/ad7125a431e176d4161099480a66f0169609a690/vllm/v1/attention/backends/flashinfer.py#L1193-L1247",
+      "repository": "vllm-project/vllm",
+      "commit": "ad7125a431e176d4161099480a66f0169609a690",
+      "path": "vllm/v1/attention/backends/flashinfer.py",
+      "start": 1193,
+      "end": 1247,
+      "sha256": "505e3fccd848a80ac922f62c1e8b19052fe2a75aef92229b3cbc6066f957bc41"
+    },
+    {
+      "label": "wrapper.run 与直接 TRT-LLM 调用",
+      "url": "https://github.com/vllm-project/vllm/blob/ad7125a431e176d4161099480a66f0169609a690/vllm/v1/attention/backends/flashinfer.py#L1693-L1823",
+      "repository": "vllm-project/vllm",
+      "commit": "ad7125a431e176d4161099480a66f0169609a690",
+      "path": "vllm/v1/attention/backends/flashinfer.py",
+      "start": 1693,
+      "end": 1823,
+      "sha256": "505e3fccd848a80ac922f62c1e8b19052fe2a75aef92229b3cbc6066f957bc41"
+    },
+    {
+      "label": "native wrapper 的参数",
+      "url": "https://github.com/vllm-project/vllm/blob/ad7125a431e176d4161099480a66f0169609a690/vllm/v1/attention/backends/flashinfer.py#L788-L815",
+      "repository": "vllm-project/vllm",
+      "commit": "ad7125a431e176d4161099480a66f0169609a690",
+      "path": "vllm/v1/attention/backends/flashinfer.py",
+      "start": 788,
+      "end": 815,
+      "sha256": "505e3fccd848a80ac922f62c1e8b19052fe2a75aef92229b3cbc6066f957bc41"
+    },
+    {
+      "label": "fast_plan_decode 的首次与 Graph 路径",
+      "url": "https://github.com/vllm-project/vllm/blob/ad7125a431e176d4161099480a66f0169609a690/vllm/v1/attention/backends/flashinfer.py#L1883-L1930",
+      "repository": "vllm-project/vllm",
+      "commit": "ad7125a431e176d4161099480a66f0169609a690",
+      "path": "vllm/v1/attention/backends/flashinfer.py",
+      "start": 1883,
+      "end": 1930,
+      "sha256": "505e3fccd848a80ac922f62c1e8b19052fe2a75aef92229b3cbc6066f957bc41"
+    },
+    {
+      "label": "SGLang 选择优先级与阈值",
+      "url": "https://github.com/sgl-project/sglang/blob/15d2cbcc90fc66b4d08745994cc707a45b067ffc/python/sglang/srt/layers/attention/flashinfer_backend.py#L2462-L2508",
+      "repository": "sgl-project/sglang",
+      "commit": "15d2cbcc90fc66b4d08745994cc707a45b067ffc",
+      "path": "python/sglang/srt/layers/attention/flashinfer_backend.py",
+      "start": 2462,
+      "end": 2508,
+      "sha256": "dce9594f150664cd12c2fb3cfddb37a955759b32a312bc27b0538c1435e82294"
+    },
+    {
+      "label": "有效 KV dtype 与分片后的 head 数",
+      "url": "https://github.com/sgl-project/sglang/blob/15d2cbcc90fc66b4d08745994cc707a45b067ffc/python/sglang/srt/layers/attention/flashinfer_backend.py#L347-L374",
+      "repository": "sgl-project/sglang",
+      "commit": "15d2cbcc90fc66b4d08745994cc707a45b067ffc",
+      "path": "python/sglang/srt/layers/attention/flashinfer_backend.py",
+      "start": 347,
+      "end": 374,
+      "sha256": "dce9594f150664cd12c2fb3cfddb37a955759b32a312bc27b0538c1435e82294"
+    },
+    {
+      "label": "实际 forward_decode 路径",
+      "url": "https://github.com/sgl-project/sglang/blob/15d2cbcc90fc66b4d08745994cc707a45b067ffc/python/sglang/srt/layers/attention/flashinfer_backend.py#L1451-L1506",
+      "repository": "sgl-project/sglang",
+      "commit": "15d2cbcc90fc66b4d08745994cc707a45b067ffc",
+      "path": "python/sglang/srt/layers/attention/flashinfer_backend.py",
+      "start": 1451,
+      "end": 1506,
+      "sha256": "dce9594f150664cd12c2fb3cfddb37a955759b32a312bc27b0538c1435e82294"
+    },
+    {
+      "label": "构造器保存后端与 Tensor Core 标志",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/flashinfer/decode.py#L767-L779",
+      "repository": "flashinfer-ai/flashinfer",
+      "commit": "3a234053930f869676488b551d41af8c6a705e2a",
+      "path": "flashinfer/decode.py",
+      "start": 767,
+      "end": 779,
+      "sha256": "8768cf5b0c9782c606c7f2a29da9a3dd7f70a6f36f12345fe52b1bcab668cb7f"
+    },
+    {
+      "label": "模块选择与 plan 参数",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/flashinfer/decode.py#L962-L1096",
+      "repository": "flashinfer-ai/flashinfer",
+      "commit": "3a234053930f869676488b551d41af8c6a705e2a",
+      "path": "flashinfer/decode.py",
+      "start": 962,
+      "end": 1096,
+      "sha256": "8768cf5b0c9782c606c7f2a29da9a3dd7f70a6f36f12345fe52b1bcab668cb7f"
+    },
+    {
+      "label": "run 参数组与执行分派",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/flashinfer/decode.py#L1286-L1388",
+      "repository": "flashinfer-ai/flashinfer",
+      "commit": "3a234053930f869676488b551d41af8c6a705e2a",
+      "path": "flashinfer/decode.py",
+      "start": 1286,
+      "end": 1388,
+      "sha256": "8768cf5b0c9782c606c7f2a29da9a3dd7f70a6f36f12345fe52b1bcab668cb7f"
+    },
+    {
+      "label": "fixed_split_size 与 CUDA Graph 的适用边界",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/flashinfer/decode.py#L881-L903",
+      "repository": "flashinfer-ai/flashinfer",
+      "commit": "3a234053930f869676488b551d41af8c6a705e2a",
+      "path": "flashinfer/decode.py",
+      "start": 881,
+      "end": 903,
+      "sha256": "8768cf5b0c9782c606c7f2a29da9a3dd7f70a6f36f12345fe52b1bcab668cb7f"
+    },
+    {
+      "label": "MeasurementPolicy：auto / eager / cuda_graph",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a75b4e353ce113171c4d075fc2d3cb5b7dd6c08/flashinfer/autotune_cache.py#L67-L155",
+      "repository": "flashinfer-ai/flashinfer",
+      "commit": "3a75b4e353ce113171c4d075fc2d3cb5b7dd6c08",
+      "path": "flashinfer/autotune_cache.py",
+      "start": 67,
+      "end": 155,
+      "sha256": "c9d387e1e5d22bfc5c4e601da8ee23586b1c3cb70cc4575b2e922874a511dd62"
+    },
+    {
+      "label": "capture、delay kernel 与计时窗",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a75b4e353ce113171c4d075fc2d3cb5b7dd6c08/flashinfer/autotuner/autotuner.py#L2674-L2724",
+      "repository": "flashinfer-ai/flashinfer",
+      "commit": "3a75b4e353ce113171c4d075fc2d3cb5b7dd6c08",
+      "path": "flashinfer/autotuner/autotuner.py",
+      "start": 2674,
+      "end": 2724,
+      "sha256": "a4d2b18b95365a1f5c009c4bd38c21e12e1a3c470f9764d9bd6e00aeac2c1243"
+    },
+    {
+      "label": "非默认测量策略进入 manifest",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a75b4e353ce113171c4d075fc2d3cb5b7dd6c08/flashinfer/autotune_cache.py#L149-L157",
+      "repository": "flashinfer-ai/flashinfer",
+      "commit": "3a75b4e353ce113171c4d075fc2d3cb5b7dd6c08",
+      "path": "flashinfer/autotune_cache.py",
+      "start": 149,
+      "end": 157,
+      "sha256": "c9d387e1e5d22bfc5c4e601da8ee23586b1c3cb70cc4575b2e922874a511dd62"
+    },
+    {
+      "label": "可选 validate_tactic 的实际行为",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a75b4e353ce113171c4d075fc2d3cb5b7dd6c08/flashinfer/autotuner/autotuner.py#L1675-L1701",
+      "repository": "flashinfer-ai/flashinfer",
+      "commit": "3a75b4e353ce113171c4d075fc2d3cb5b7dd6c08",
+      "path": "flashinfer/autotuner/autotuner.py",
+      "start": 1675,
+      "end": 1701,
+      "sha256": "a4d2b18b95365a1f5c009c4bd38c21e12e1a3c470f9764d9bd6e00aeac2c1243"
+    },
+    {
+      "label": "autotune_v2_reload 的前提与效果",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a75b4e353ce113171c4d075fc2d3cb5b7dd6c08/flashinfer/autotune_cache.py#L517-L550",
+      "repository": "flashinfer-ai/flashinfer",
+      "commit": "3a75b4e353ce113171c4d075fc2d3cb5b7dd6c08",
+      "path": "flashinfer/autotune_cache.py",
+      "start": 517,
+      "end": 550,
+      "sha256": "c9d387e1e5d22bfc5c4e601da8ee23586b1c3cb70cc4575b2e922874a511dd62"
+    },
+    {
+      "label": "握手 pipeline 深度与 Q stage 分开",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/a93c9a8fb95516a08e0974743bd5723122613377/flash_attn/cute/flash_fwd_sm100.py#L323-L329",
+      "repository": "Dao-AILab/flash-attention",
+      "commit": "a93c9a8fb95516a08e0974743bd5723122613377",
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "start": 323,
+      "end": 329,
+      "sha256": "ccae92a1d287fb1745b413170d984a7b4d6aa90cf91f67f32baacab92d2db779"
+    },
+    {
+      "label": "PV 目标使用 stage % q_stage",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/a93c9a8fb95516a08e0974743bd5723122613377/flash_attn/cute/flash_fwd_sm100.py#L1806-L1824",
+      "repository": "Dao-AILab/flash-attention",
+      "commit": "a93c9a8fb95516a08e0974743bd5723122613377",
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "start": 1806,
+      "end": 1824,
+      "sha256": "ccae92a1d287fb1745b413170d984a7b4d6aa90cf91f67f32baacab92d2db779"
+    },
+    {
+      "label": "load warp：K 提前一块，V 滞后一块",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/a93c9a8fb95516a08e0974743bd5723122613377/flash_attn/cute/flash_fwd_sm100.py#L1629-L1683",
+      "repository": "Dao-AILab/flash-attention",
+      "commit": "a93c9a8fb95516a08e0974743bd5723122613377",
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "start": 1629,
+      "end": 1683,
+      "sha256": "ccae92a1d287fb1745b413170d984a7b4d6aa90cf91f67f32baacab92d2db779"
+    },
+    {
+      "label": "MMA 的 prefill / steady-state / tail",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/a93c9a8fb95516a08e0974743bd5723122613377/flash_attn/cute/flash_fwd_sm100.py#L1877-L1984",
+      "repository": "Dao-AILab/flash-attention",
+      "commit": "a93c9a8fb95516a08e0974743bd5723122613377",
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "start": 1877,
+      "end": 1984,
+      "sha256": "ccae92a1d287fb1745b413170d984a7b4d6aa90cf91f67f32baacab92d2db779"
+    },
+    {
+      "label": "S/P/O 与 O accumulator 的 pipeline 契约",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/a93c9a8fb95516a08e0974743bd5723122613377/flash_attn/cute/flash_fwd_sm100.py#L1048-L1079",
+      "repository": "Dao-AILab/flash-attention",
+      "commit": "a93c9a8fb95516a08e0974743bd5723122613377",
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "start": 1048,
+      "end": 1079,
+      "sha256": "ccae92a1d287fb1745b413170d984a7b4d6aa90cf91f67f32baacab92d2db779"
+    },
+    {
+      "label": "correction 等待 O，随后释放下一次 PV",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/a93c9a8fb95516a08e0974743bd5723122613377/flash_attn/cute/flash_fwd_sm100.py#L2859-L2896",
+      "repository": "Dao-AILab/flash-attention",
+      "commit": "a93c9a8fb95516a08e0974743bd5723122613377",
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "start": 2859,
+      "end": 2896,
+      "sha256": "ccae92a1d287fb1745b413170d984a7b4d6aa90cf91f67f32baacab92d2db779"
+    },
+    {
+      "label": "PV 计数在 tile 循环外初始化",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/a93c9a8fb95516a08e0974743bd5723122613377/flash_attn/cute/flash_fwd_sm100.py#L1834-L1845",
+      "repository": "Dao-AILab/flash-attention",
+      "commit": "a93c9a8fb95516a08e0974743bd5723122613377",
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "start": 1834,
+      "end": 1845,
+      "sha256": "ccae92a1d287fb1745b413170d984a7b4d6aa90cf91f67f32baacab92d2db779"
+    },
+    {
+      "label": "PV 按槽计算 phase",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/a93c9a8fb95516a08e0974743bd5723122613377/flash_attn/cute/flash_fwd_sm100.py#L1918-L1948",
+      "repository": "Dao-AILab/flash-attention",
+      "commit": "a93c9a8fb95516a08e0974743bd5723122613377",
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "start": 1918,
+      "end": 1948,
+      "sha256": "ccae92a1d287fb1745b413170d984a7b4d6aa90cf91f67f32baacab92d2db779"
+    },
+    {
+      "label": "softmax 按计数选 TMEM 列与 barrier",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/a93c9a8fb95516a08e0974743bd5723122613377/flash_attn/cute/flash_fwd_sm100.py#L2613-L2624",
+      "repository": "Dao-AILab/flash-attention",
+      "commit": "a93c9a8fb95516a08e0974743bd5723122613377",
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "start": 2613,
+      "end": 2624,
+      "sha256": "ccae92a1d287fb1745b413170d984a7b4d6aa90cf91f67f32baacab92d2db779"
+    },
+    {
+      "label": "sm_stats 的 acquire 使用相反 phase",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/a93c9a8fb95516a08e0974743bd5723122613377/flash_attn/cute/flash_fwd_sm100.py#L2715-L2725",
+      "repository": "Dao-AILab/flash-attention",
+      "commit": "a93c9a8fb95516a08e0974743bd5723122613377",
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "start": 2715,
+      "end": 2725,
+      "sha256": "ccae92a1d287fb1745b413170d984a7b4d6aa90cf91f67f32baacab92d2db779"
+    },
+    {
+      "label": "完整启用条件与每 split 长度估计",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/a93c9a8fb95516a08e0974743bd5723122613377/flash_attn/cute/interface.py#L1108-L1142",
+      "repository": "Dao-AILab/flash-attention",
+      "commit": "a93c9a8fb95516a08e0974743bd5723122613377",
+      "path": "flash_attn/cute/interface.py",
+      "start": 1108,
+      "end": 1142,
+      "sha256": "ad66e664523002b769a24bd2df076e8b96bb4005c8a5eb8f60da94e0bb823aae"
+    },
+    {
+      "label": "64 / 128 维的 split 阈值",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/a93c9a8fb95516a08e0974743bd5723122613377/flash_attn/cute/interface.py#L82-L82",
+      "repository": "Dao-AILab/flash-attention",
+      "commit": "a93c9a8fb95516a08e0974743bd5723122613377",
+      "path": "flash_attn/cute/interface.py",
+      "start": 82,
+      "end": 82,
+      "sha256": "ad66e664523002b769a24bd2df076e8b96bb4005c8a5eb8f60da94e0bb823aae"
+    }
+  ],
+  "blogs": [
+    {
+      "url": "https://flashinfer.ai/2026/09/22/autotuner-v2.html",
+      "status": "read; selected mechanisms checked against merge 3a75b4e3"
+    },
+    {
+      "url": "https://research.colfax-intl.com/optimization-diaries-s-p-ping-pong-for-flashattention-4-decode/",
+      "status": "read; mechanisms checked against PR head a93c9a8f"
+    }
+  ],
+  "pull_requests": [
+    {
+      "html_url": "https://github.com/flashinfer-ai/flashinfer/pull/3861",
+      "state": "closed",
+      "title": "feat(autotuner): Autotuner v2 (autotune_v2) — managed persistence, deployment-matched measurement, runner contract",
+      "merged_at": "2026-09-05T02:32:52Z",
+      "merge_commit_sha": "3a75b4e353ce113171c4d075fc2d3cb5b7dd6c08",
+      "head": "ba40a493a02cee2515913d67ec1a9a633c26bd31",
+      "base": "8613260ab8793c30e05c7de941773aac502c9be2"
+    },
+    {
+      "html_url": "https://github.com/Dao-AILab/flash-attention/pull/2817",
+      "state": "open",
+      "title": "[Cute,Fwd,Sm100] S/P ping-pong to overlap QK with softmax in decode",
+      "merged_at": null,
+      "merge_commit_sha": null,
+      "head": "a93c9a8fb95516a08e0974743bd5723122613377",
+      "base": "0251105a2fb19d2957484b7f023cd8c115286ced"
+    }
+  ],
+  "zhihu": {
+    "url": "https://zhuanlan.zhihu.com/p/2027100083150156120",
+    "checked_on": "2026-11-20",
+    "status": "HTTP 403; not read"
+  }
+}

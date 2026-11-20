@@ -1,0 +1,407 @@
+{
+  "reviewed_on": "2026-11-16",
+  "policy": "Pinned snapshots, not a claim of latest upstream or mutually compatible dependency versions.",
+  "repositories": {
+    "fi": {
+      "name": "FlashInfer",
+      "github": "flashinfer-ai/flashinfer",
+      "commit": "3a234053930f869676488b551d41af8c6a705e2a",
+      "date": "2025-11-19"
+    },
+    "fa": {
+      "name": "FlashAttention",
+      "github": "Dao-AILab/flash-attention",
+      "commit": "fbe15683a881743c2625b931cc4abcc107b43154",
+      "date": "2026-03-06"
+    },
+    "vl": {
+      "name": "vLLM",
+      "github": "vllm-project/vllm",
+      "commit": "ad7125a431e176d4161099480a66f0169609a690",
+      "date": "2026-05-14"
+    },
+    "sg": {
+      "name": "SGLang",
+      "github": "sgl-project/sglang",
+      "commit": "15d2cbcc90fc66b4d08745994cc707a45b067ffc",
+      "date": "2026-09-07"
+    },
+    "ep": {
+      "name": "DeepEP",
+      "github": "deepseek-ai/DeepEP",
+      "commit": "b306af06afd412c88e51e71802951606e40b7358",
+      "date": "2026-04-30"
+    }
+  },
+  "references": {
+    "fi-api": {
+      "repository": "fi",
+      "path": "flashinfer/decode.py",
+      "start": 812,
+      "end": 1106,
+      "label": "plan 与后端分支",
+      "blob_sha256": "8768cf5b0c9782c606c7f2a29da9a3dd7f70a6f36f12345fe52b1bcab668cb7f",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/flashinfer/decode.py#L812-L1106"
+    },
+    "fi-run": {
+      "repository": "fi",
+      "path": "flashinfer/decode.py",
+      "start": 1286,
+      "end": 1388,
+      "label": "run 分派",
+      "blob_sha256": "8768cf5b0c9782c606c7f2a29da9a3dd7f70a6f36f12345fe52b1bcab668cb7f",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/flashinfer/decode.py#L1286-L1388"
+    },
+    "fi-bind": {
+      "repository": "fi",
+      "path": "csrc/batch_decode.cu",
+      "start": 39,
+      "end": 73,
+      "label": "FFI → DecodePlan",
+      "blob_sha256": "2478d6c0932abfca94bbe073a6f9265f2aaa12bd48100d10c6c1ccb6098a7031",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/csrc/batch_decode.cu#L39-L73"
+    },
+    "fi-plan": {
+      "repository": "fi",
+      "path": "include/flashinfer/attention/scheduler.cuh",
+      "start": 349,
+      "end": 480,
+      "label": "split 元数据与 workspace",
+      "blob_sha256": "3fdc85c6b42d9c27fd688c614fef162bb523f3a95f095ba40dc53e3c52712c3b",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/include/flashinfer/attention/scheduler.cuh#L349-L480"
+    },
+    "fi-est": {
+      "repository": "fi",
+      "path": "include/flashinfer/attention/scheduler.cuh",
+      "start": 149,
+      "end": 209,
+      "label": "occupancy 与分片估计",
+      "blob_sha256": "3fdc85c6b42d9c27fd688c614fef162bb523f3a95f095ba40dc53e3c52712c3b",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/include/flashinfer/attention/scheduler.cuh#L149-L209"
+    },
+    "fi-page": {
+      "repository": "fi",
+      "path": "include/flashinfer/page.cuh",
+      "start": 147,
+      "end": 191,
+      "label": "页长与物理地址",
+      "blob_sha256": "1712c443756671ddabd32fe58dbdc0f87fe3e25c6fdc31f44d51316ca0d0beab",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/include/flashinfer/page.cuh#L147-L191"
+    },
+    "fi-map": {
+      "repository": "fi",
+      "path": "include/flashinfer/attention/decode.cuh",
+      "start": 396,
+      "end": 435,
+      "label": "CTA、head、chunk 映射",
+      "blob_sha256": "019d673aa848a938798a2c58b34b9b5813a3f137962cbbd90ef7bd71f636f373",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/include/flashinfer/attention/decode.cuh#L396-L435"
+    },
+    "fi-pipe": {
+      "repository": "fi",
+      "path": "include/flashinfer/attention/decode.cuh",
+      "start": 480,
+      "end": 605,
+      "label": "cp.async 与缓冲复用",
+      "blob_sha256": "019d673aa848a938798a2c58b34b9b5813a3f137962cbbd90ef7bd71f636f373",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/include/flashinfer/attention/decode.cuh#L480-L605"
+    },
+    "fi-qk": {
+      "repository": "fi",
+      "path": "include/flashinfer/attention/decode.cuh",
+      "start": 64,
+      "end": 124,
+      "label": "QK 与在线 softmax",
+      "blob_sha256": "019d673aa848a938798a2c58b34b9b5813a3f137962cbbd90ef7bd71f636f373",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/include/flashinfer/attention/decode.cuh#L64-L124"
+    },
+    "fi-state": {
+      "repository": "fi",
+      "path": "include/flashinfer/attention/state.cuh",
+      "start": 29,
+      "end": 78,
+      "label": "state 与 merge",
+      "blob_sha256": "b2f59c104c2857e7e69f1837faf577525a292da98b375d5fb24dbcfc15d78159",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/include/flashinfer/attention/state.cuh#L29-L78"
+    },
+    "fi-launch": {
+      "repository": "fi",
+      "path": "include/flashinfer/attention/decode.cuh",
+      "start": 741,
+      "end": 822,
+      "label": "线程、SMEM、split merge",
+      "blob_sha256": "019d673aa848a938798a2c58b34b9b5813a3f137962cbbd90ef7bd71f636f373",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/include/flashinfer/attention/decode.cuh#L741-L822"
+    },
+    "fi-group-args": {
+      "repository": "fi",
+      "path": "include/flashinfer/gemm/group_gemm_fp8_groupwise_sm100.cuh",
+      "start": 33,
+      "end": 73,
+      "label": "group pointers 与 scales",
+      "blob_sha256": "fce7b6e0ac195ceb059aa2372b9d964a666bc89e5e98e89ca83308cedab6b73d",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/include/flashinfer/gemm/group_gemm_fp8_groupwise_sm100.cuh#L33-L73"
+    },
+    "fi-group-main": {
+      "repository": "fi",
+      "path": "include/flashinfer/gemm/group_gemm_fp8_groupwise_sm100.cuh",
+      "start": 76,
+      "end": 157,
+      "label": "SM100 grouped GEMM builder",
+      "blob_sha256": "fce7b6e0ac195ceb059aa2372b9d964a666bc89e5e98e89ca83308cedab6b73d",
+      "url": "https://github.com/flashinfer-ai/flashinfer/blob/3a234053930f869676488b551d41af8c6a705e2a/include/flashinfer/gemm/group_gemm_fp8_groupwise_sm100.cuh#L76-L157"
+    },
+    "fa-entry": {
+      "repository": "fa",
+      "path": "flash_attn/cute/interface.py",
+      "start": 465,
+      "end": 515,
+      "label": "SM100 实现构造",
+      "blob_sha256": "4d2223bd81604ef2df1c9d50bdcd540de9397967b112b4a150b30af4ac4e4306",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/fbe15683a881743c2625b931cc4abcc107b43154/flash_attn/cute/interface.py#L465-L515"
+    },
+    "fa-role": {
+      "repository": "fa",
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "start": 177,
+      "end": 255,
+      "label": "warp 分工与 TMEM offsets",
+      "blob_sha256": "33542e4d2355eed1276f22cd356a79de34a13252a1d06243a5dfe9d2036de7f7",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/fbe15683a881743c2625b931cc4abcc107b43154/flash_attn/cute/flash_fwd_sm100.py#L177-L255"
+    },
+    "fa-size": {
+      "repository": "fa",
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "start": 258,
+      "end": 297,
+      "label": "SMEM stage 预算",
+      "blob_sha256": "33542e4d2355eed1276f22cd356a79de34a13252a1d06243a5dfe9d2036de7f7",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/fbe15683a881743c2625b931cc4abcc107b43154/flash_attn/cute/flash_fwd_sm100.py#L258-L297"
+    },
+    "fa-pipe": {
+      "repository": "fa",
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "start": 858,
+      "end": 931,
+      "label": "pipeline 契约",
+      "blob_sha256": "33542e4d2355eed1276f22cd356a79de34a13252a1d06243a5dfe9d2036de7f7",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/fbe15683a881743c2625b931cc4abcc107b43154/flash_attn/cute/flash_fwd_sm100.py#L858-L931"
+    },
+    "fa-mma": {
+      "repository": "fa",
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "start": 1533,
+      "end": 1672,
+      "label": "QK/PV 发射与完成依赖",
+      "blob_sha256": "33542e4d2355eed1276f22cd356a79de34a13252a1d06243a5dfe9d2036de7f7",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/fbe15683a881743c2625b931cc4abcc107b43154/flash_attn/cute/flash_fwd_sm100.py#L1533-L1672"
+    },
+    "fa-soft": {
+      "repository": "fa",
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "start": 2081,
+      "end": 2161,
+      "label": "softmax / P 分段发布",
+      "blob_sha256": "33542e4d2355eed1276f22cd356a79de34a13252a1d06243a5dfe9d2036de7f7",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/fbe15683a881743c2625b931cc4abcc107b43154/flash_attn/cute/flash_fwd_sm100.py#L2081-L2161"
+    },
+    "fa-correct": {
+      "repository": "fa",
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "start": 2442,
+      "end": 2491,
+      "label": "TMEM → register → TMEM",
+      "blob_sha256": "33542e4d2355eed1276f22cd356a79de34a13252a1d06243a5dfe9d2036de7f7",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/fbe15683a881743c2625b931cc4abcc107b43154/flash_attn/cute/flash_fwd_sm100.py#L2442-L2491"
+    },
+    "fa-desc": {
+      "repository": "fa",
+      "path": "flash_attn/cute/mma_sm100_desc.py",
+      "start": 111,
+      "end": 162,
+      "label": "32-bit instruction descriptor",
+      "blob_sha256": "8fb60a31e73115ee757fd3bf07a7096c35810fbe7e76b90d5ebe6f2d6944ff1a",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/fbe15683a881743c2625b931cc4abcc107b43154/flash_attn/cute/mma_sm100_desc.py#L111-L162"
+    },
+    "fa-smem-desc": {
+      "repository": "fa",
+      "path": "flash_attn/cute/mma_sm100_desc.py",
+      "start": 212,
+      "end": 287,
+      "label": "64-bit SMEM descriptor",
+      "blob_sha256": "8fb60a31e73115ee757fd3bf07a7096c35810fbe7e76b90d5ebe6f2d6944ff1a",
+      "url": "https://github.com/Dao-AILab/flash-attention/blob/fbe15683a881743c2625b931cc4abcc107b43154/flash_attn/cute/mma_sm100_desc.py#L212-L287"
+    },
+    "vl-attn": {
+      "repository": "vl",
+      "path": "vllm/v1/attention/backends/flashinfer.py",
+      "start": 790,
+      "end": 815,
+      "label": "native decode wrapper",
+      "blob_sha256": "505e3fccd848a80ac922f62c1e8b19052fe2a75aef92229b3cbc6066f957bc41",
+      "url": "https://github.com/vllm-project/vllm/blob/ad7125a431e176d4161099480a66f0169609a690/vllm/v1/attention/backends/flashinfer.py#L790-L815"
+    },
+    "vl-route": {
+      "repository": "vl",
+      "path": "vllm/model_executor/layers/fused_moe/router/fused_topk_router.py",
+      "start": 69,
+      "end": 111,
+      "label": "top-k 路由输出",
+      "blob_sha256": "2897c451fe079cf6fb61b47ac297c566c70f5add3eff2fefae8a71b8874c4e00",
+      "url": "https://github.com/vllm-project/vllm/blob/ad7125a431e176d4161099480a66f0169609a690/vllm/model_executor/layers/fused_moe/router/fused_topk_router.py#L69-L111"
+    },
+    "vl-map": {
+      "repository": "vl",
+      "path": "vllm/model_executor/layers/fused_moe/fused_moe.py",
+      "start": 381,
+      "end": 449,
+      "label": "program / assignment / expert 映射",
+      "blob_sha256": "b89928a20f9069396f0490232cb984ae7e46e4bf79319063ae901d7c8a5e35f6",
+      "url": "https://github.com/vllm-project/vllm/blob/ad7125a431e176d4161099480a66f0169609a690/vllm/model_executor/layers/fused_moe/fused_moe.py#L381-L449"
+    },
+    "vl-weight": {
+      "repository": "vl",
+      "path": "vllm/model_executor/layers/fused_moe/fused_moe.py",
+      "start": 518,
+      "end": 556,
+      "label": "路由权重、cast、scatter",
+      "blob_sha256": "b89928a20f9069396f0490232cb984ae7e46e4bf79319063ae901d7c8a5e35f6",
+      "url": "https://github.com/vllm-project/vllm/blob/ad7125a431e176d4161099480a66f0169609a690/vllm/model_executor/layers/fused_moe/fused_moe.py#L518-L556"
+    },
+    "vl-prepare": {
+      "repository": "vl",
+      "path": "vllm/model_executor/layers/fused_moe/fused_moe.py",
+      "start": 1536,
+      "end": 1584,
+      "label": "aligned 与 naive 分支",
+      "blob_sha256": "b89928a20f9069396f0490232cb984ae7e46e4bf79319063ae901d7c8a5e35f6",
+      "url": "https://github.com/vllm-project/vllm/blob/ad7125a431e176d4161099480a66f0169609a690/vllm/model_executor/layers/fused_moe/fused_moe.py#L1536-L1584"
+    },
+    "vl-sequence": {
+      "repository": "vl",
+      "path": "vllm/model_executor/layers/fused_moe/fused_moe.py",
+      "start": 1780,
+      "end": 1869,
+      "label": "GEMM₁ → 激活 → GEMM₂ → sum",
+      "blob_sha256": "b89928a20f9069396f0490232cb984ae7e46e4bf79319063ae901d7c8a5e35f6",
+      "url": "https://github.com/vllm-project/vllm/blob/ad7125a431e176d4161099480a66f0169609a690/vllm/model_executor/layers/fused_moe/fused_moe.py#L1780-L1869"
+    },
+    "sg-attn-choice": {
+      "repository": "sg",
+      "path": "python/sglang/srt/layers/attention/flashinfer_backend.py",
+      "start": 366,
+      "end": 374,
+      "label": "Tensor Core 决策输入",
+      "blob_sha256": "dce9594f150664cd12c2fb3cfddb37a955759b32a312bc27b0538c1435e82294",
+      "url": "https://github.com/sgl-project/sglang/blob/15d2cbcc90fc66b4d08745994cc707a45b067ffc/python/sglang/srt/layers/attention/flashinfer_backend.py#L366-L374"
+    },
+    "sg-attn": {
+      "repository": "sg",
+      "path": "python/sglang/srt/layers/attention/flashinfer_backend.py",
+      "start": 505,
+      "end": 512,
+      "label": "decode wrapper 参数",
+      "blob_sha256": "dce9594f150664cd12c2fb3cfddb37a955759b32a312bc27b0538c1435e82294",
+      "url": "https://github.com/sgl-project/sglang/blob/15d2cbcc90fc66b4d08745994cc707a45b067ffc/python/sglang/srt/layers/attention/flashinfer_backend.py#L505-L512"
+    },
+    "sg-moe-config": {
+      "repository": "sg",
+      "path": "python/sglang/srt/layers/moe/moe_runner/triton_utils/fused_moe.py",
+      "start": 472,
+      "end": 517,
+      "label": "up/down config 与 TMA 条件",
+      "blob_sha256": "8e881009c6a451f091b733cfd124d3b6b860a368057d423a65c5ce114b1e11d7",
+      "url": "https://github.com/sgl-project/sglang/blob/15d2cbcc90fc66b4d08745994cc707a45b067ffc/python/sglang/srt/layers/moe/moe_runner/triton_utils/fused_moe.py#L472-L517"
+    },
+    "sg-moe-down": {
+      "repository": "sg",
+      "path": "python/sglang/srt/layers/moe/moe_runner/triton_utils/fused_moe.py",
+      "start": 890,
+      "end": 966,
+      "label": "down GEMM 与 combine 分支",
+      "blob_sha256": "8e881009c6a451f091b733cfd124d3b6b860a368057d423a65c5ce114b1e11d7",
+      "url": "https://github.com/sgl-project/sglang/blob/15d2cbcc90fc66b4d08745994cc707a45b067ffc/python/sglang/srt/layers/moe/moe_runner/triton_utils/fused_moe.py#L890-L966"
+    },
+    "sg-fi": {
+      "repository": "sg",
+      "path": "python/sglang/srt/layers/moe/moe_runner/flashinfer_cutlass.py",
+      "start": 1,
+      "end": 5,
+      "label": "FlashInfer CUTLASS runner 边界",
+      "blob_sha256": "07d062ab65db98b1aa5bea838a63287a64badae240631b4aabb240d248aca254",
+      "url": "https://github.com/sgl-project/sglang/blob/15d2cbcc90fc66b4d08745994cc707a45b067ffc/python/sglang/srt/layers/moe/moe_runner/flashinfer_cutlass.py#L1-L5"
+    },
+    "ep-handle": {
+      "repository": "ep",
+      "path": "deep_ep/buffers/elastic.py",
+      "start": 24,
+      "end": 54,
+      "label": "EPHandle / 去重与展开",
+      "blob_sha256": "df08281f6538c9da149d9eaf55f4768f800c5a92a4bb2d13ce9b4483896c743a",
+      "url": "https://github.com/deepseek-ai/DeepEP/blob/b306af06afd412c88e51e71802951606e40b7358/deep_ep/buffers/elastic.py#L24-L54"
+    },
+    "ep-api": {
+      "repository": "ep",
+      "path": "deep_ep/buffers/elastic.py",
+      "start": 663,
+      "end": 728,
+      "label": "dispatch 接口与 stream 契约",
+      "blob_sha256": "df08281f6538c9da149d9eaf55f4768f800c5a92a4bb2d13ce9b4483896c743a",
+      "url": "https://github.com/deepseek-ai/DeepEP/blob/b306af06afd412c88e51e71802951606e40b7358/deep_ep/buffers/elastic.py#L663-L728"
+    },
+    "ep-combine": {
+      "repository": "ep",
+      "path": "deep_ep/buffers/elastic.py",
+      "start": 823,
+      "end": 860,
+      "label": "combine 接口",
+      "blob_sha256": "df08281f6538c9da149d9eaf55f4768f800c5a92a4bb2d13ce9b4483896c743a",
+      "url": "https://github.com/deepseek-ai/DeepEP/blob/b306af06afd412c88e51e71802951606e40b7358/deep_ep/buffers/elastic.py#L823-L860"
+    },
+    "ep-event": {
+      "repository": "ep",
+      "path": "deep_ep/utils/event.py",
+      "start": 35,
+      "end": 80,
+      "label": "current_stream_wait 与上下文",
+      "blob_sha256": "61f23d87195e09bb670aef836f30d97b0e25d4fbe0f099f2d4d3d50afbce6ca4",
+      "url": "https://github.com/deepseek-ai/DeepEP/blob/b306af06afd412c88e51e71802951606e40b7358/deep_ep/utils/event.py#L35-L80"
+    },
+    "ep-launch": {
+      "repository": "ep",
+      "path": "csrc/kernels/elastic/dispatch.hpp",
+      "start": 126,
+      "end": 162,
+      "label": "JIT 选择 dispatch / hybrid",
+      "blob_sha256": "34180aebedf6f0a7062fd2bfe4f35668a58ae9486767f7d77554817a8f9999a2",
+      "url": "https://github.com/deepseek-ai/DeepEP/blob/b306af06afd412c88e51e71802951606e40b7358/csrc/kernels/elastic/dispatch.hpp#L126-L162"
+    },
+    "ep-device": {
+      "repository": "ep",
+      "path": "deep_ep/include/deep_ep/impls/dispatch.cuh",
+      "start": 280,
+      "end": 395,
+      "label": "TMA、rank 去重、传输完成",
+      "blob_sha256": "25c87cec958707b3ccf9f8d041621baeb6b963b94f11fb6c9986952e5e0a6095",
+      "url": "https://github.com/deepseek-ai/DeepEP/blob/b306af06afd412c88e51e71802951606e40b7358/deep_ep/include/deep_ep/impls/dispatch.cuh#L280-L395"
+    },
+    "ep-reduce": {
+      "repository": "ep",
+      "path": "deep_ep/include/deep_ep/impls/combine.cuh",
+      "start": 122,
+      "end": 173,
+      "label": "展开布局的局部归约",
+      "blob_sha256": "6a0f1f3f978978a35f9616178825f8c29881aafc3a04d8c2ba68b50a4a283c9a",
+      "url": "https://github.com/deepseek-ai/DeepEP/blob/b306af06afd412c88e51e71802951606e40b7358/deep_ep/include/deep_ep/impls/combine.cuh#L122-L173"
+    },
+    "ep-ref": {
+      "repository": "ep",
+      "path": "deep_ep/utils/refs.py",
+      "start": 61,
+      "end": 82,
+      "label": "按目的 rank 去重的 reference",
+      "blob_sha256": "c5f551b49e55b4481b68ba14d83fd5362a49e43e4ddf779a2c3c471482ff2fef",
+      "url": "https://github.com/deepseek-ai/DeepEP/blob/b306af06afd412c88e51e71802951606e40b7358/deep_ep/utils/refs.py#L61-L82"
+    }
+  }
+}

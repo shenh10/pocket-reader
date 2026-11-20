@@ -173,11 +173,12 @@
     <a class="back" href="../">← 返回 My Pocket Reader</a>
     <header>
       <h1>NVIDIA 文档速读</h1>
-      <p class="subtitle">NVIDIA 相关文档的中文速读页。这里是入口目录，具体内容保持在各自子目录或独立 HTML 中，适合直接打开和收藏。</p>
+      <p class="subtitle">从 CUDA 基础与官方文档速查，走到 attention / MoE 的真实 kernel。源码深读按固定版本追踪 FlashInfer、vLLM、SGLang、FlashAttention 与 DeepEP 的执行路径。</p>
     </header>
 
     <h2 class="section-title">文档入口</h2>
     <section class="grid" aria-label="NVIDIA 文档入口">
+      <a class="card" href="./kernels/" style="grid-column:1/-1;background:#16271e;color:#f2f1e9;border-color:#16271e;padding:26px"><div><div class="topline"><h2>Kernel Atlas · Attention × MoE 源码深读</h2><span class="badge">6 CASE STUDIES</span></div><p class="desc" style="color:#c6d5bd">从 paged decode、Blackwell warp 流水线，到 fused MoE 与跨卡 dispatch/combine。固定源码版本，逐层解释索引、布局、同步与资源预算，附可复算实验；新增后端/计时与 FA4 S/P 双缓冲专题。</p></div><div class="path" style="color:#bedc75;border-color:#526447">进入源码案例集 → /nvidia-docs/kernels/</div></a>
       <a class="card" href="./nccl/">
         <div>
           <div class="topline">
@@ -200,6 +201,7 @@
         <div class="path">/nvidia-docs/cuda/programming-guide.html</div>
       </a>
 
+      <a class="card featured" href="./cuda/blackwell.html"><div><div class="topline"><h2>Blackwell 之后的 CUDA 学习路径</h2><span class="badge">FIELD GUIDE</span></div><p class="desc">从 SM100/SM120/Rubin、TMEM、TMA、tcgen05、FP4/FP6/FP8 到 Cluster Launch Control；用数据流和练习把硬件特性变成 Kernel 直觉。</p></div><div class="path">/nvidia-docs/cuda/blackwell.html</div></a>
       <a class="card" href="./cuda/cublas-reference.html">
         <div>
           <div class="topline">
