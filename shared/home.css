@@ -423,3 +423,4 @@ select:focus-visible {
     max-width: 130px;
   }
 }
+@media(max-width:700px){.welcome{display:block}.welcome .issue{display:none}.welcome h1{font-size:32px}.welcome p{max-width:none}}

@@ -2,11 +2,8 @@ import { test, expect } from "@playwright/test";
 import { date, day, summary, snapshot } from "./fixtures.mjs";
 const base = "/pocket-reader/";
 async function noOverflow(page) {
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth + 1,
-    ),
-  ).toBe(true);
+ const layout=await page.evaluate(()=>({width:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth,outliers:[...document.querySelectorAll('body *')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.right>document.documentElement.clientWidth+1}).slice(0,12).map(e=>({tag:e.tagName,class:e.className,width:e.getBoundingClientRect().width,text:e.textContent?.slice(0,60)}))}));
+ expect(layout.scroll,JSON.stringify(layout)).toBeLessThanOrEqual(layout.width+1);
 }
 async function dataRoutes(page) {
   await page.route("**/pocket-reader/v1/**", async (route) => {
@@ -46,6 +43,8 @@ test("phone navigation, reading size and safe notification routing", async ({
   await page.goto(base + "nvidia-docs/kernels/execution-path.html");
   await expect(page.locator("html")).toHaveClass(/pr-font-large/);
   await noOverflow(page);
+  await expect(page.getByRole('navigation',{name:'主要导航'})).toBeInViewport();
+  await expect(page.getByRole('button',{name:'分享当前页面'})).toBeInViewport();
   await page.screenshot({ path: "test-results/mobile-tutorial.png" });
   await page.evaluate(() =>
     window.PocketReader.handleNotification({ date: "2026-11-20" }),
