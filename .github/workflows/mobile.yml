@@ -2,7 +2,7 @@ name: Build Pocket Reader Mobile
 on:
   workflow_dispatch:
   push:
-    branches: [main, "linzhao/push-and-web-updates"]
+    branches: [main]
   pull_request:
     branches: [main]
 permissions:
