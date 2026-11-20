@@ -1,0 +1,14 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <application>
+    <service android:name="cc.shenhan.pocketpush.DigestPushService" android:enabled="true" android:exported="false" android:process=":pushcore">
+      <intent-filter><action android:name="cn.jiguang.user.service.action" /></intent-filter>
+    </service>
+    <receiver android:name="cc.shenhan.pocketpush.DigestReceiver" android:enabled="true" android:exported="false">
+      <intent-filter>
+        <action android:name="cn.jpush.android.intent.RECEIVER_MESSAGE" />
+        <category android:name="${applicationId}" />
+      </intent-filter>
+    </receiver>
+  </application>
+</manifest>

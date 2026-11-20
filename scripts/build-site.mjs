@@ -37,7 +37,7 @@ if (!reuse) {
 }
 await fs.rm(out, { recursive: true, force: true });
 await fs.mkdir(path.join(out, "assets"), { recursive: true });
-for (const file of ["index.html", "settings.html", ".nojekyll"])
+for (const file of ["index.html", "settings.html", "third-party.html", ".nojekyll"])
   await fs.copyFile(path.join(root, file), path.join(out, file));
 await fs.cp(path.join(root, "nvidia-docs"), path.join(out, "nvidia-docs"), {
   recursive: true,
@@ -58,6 +58,7 @@ for (const file of [
     path.join(root, "shared", file),
     path.join(out, "shared", file),
   );
+await fs.copyFile(path.join(root,"node_modules/@capgo/capacitor-updater/LICENSE"),path.join(out,"shared/updater-license.txt"));
 await build({
   entryPoints: [path.join(root, "shared/runtime.js")],
   bundle: true,

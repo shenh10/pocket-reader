@@ -1,9 +1,11 @@
-import { Capacitor, registerPlugin } from "@capacitor/core";
+import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { Preferences } from "@capacitor/preferences";
 import { Share } from "@capacitor/share";
 import { StatusBar, Style } from "@capacitor/status-bar";
+import { startPush } from "./push-client.js";
+import { startUpdates } from "./live-updates.js";
 import { contentCache } from "./content-client.js";
 import { readService } from "./service-client.js";
 import { routeFromLink, publishedUrl, PUBLIC_SITE } from "./routes.js";
@@ -251,30 +253,11 @@ if (native) {
       Browser.open({ url: url.href }).catch(() => message("暂时无法打开链接"));
     }
   });
-  // A vendor SDK implementation can supply this Capacitor plugin after app credentials are provisioned.
-  if (Capacitor.isPluginAvailable("PocketPush")) {
-    const push = registerPlugin("PocketPush");
-    push.addListener("notificationOpened", (payload) =>
-      window.PocketReader.handleNotification(payload),
-    );
-    if (settings) {
-      const button = document.getElementById("push-enable");
-      button.disabled = false;
-      button.textContent = "开启";
-      document.getElementById("push-state").textContent =
-        "允许接收每日精选，点击通知直接打开当天日报。";
-      button.addEventListener("click", async () => {
-        try {
-          await push.register();
-          message("推送请求已提交，请完成系统授权。");
-        } catch {
-          message("推送尚未就绪，请稍后重试。");
-        }
-      });
-    }
-  }
+  startPush({message,settings,handleNotification:window.PocketReader.handleNotification}).catch(() => {});
 } else if ("serviceWorker" in navigator) {
   navigator.serviceWorker
     .register(new URL("sw.js", base), { scope: base.pathname })
     .catch(() => {});
 }
+
+if (native) startUpdates({message, settings}).catch(() => {});

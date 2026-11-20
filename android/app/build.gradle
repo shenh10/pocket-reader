@@ -7,8 +7,9 @@ android {
         applicationId "cc.shenhan.pocketreader"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "0.2.0"
+        versionCode 3
+        versionName "0.3.0"
+        manifestPlaceholders = [JPUSH_APPKEY: System.getenv("JPUSH_APP_KEY") ?: "000000000000000000000000", JPUSH_CHANNEL: "pocket-reader"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

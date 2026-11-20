@@ -1,0 +1,5 @@
+{
+  "name": "@pocket-reader/push", "version": "0.3.0", "private": true,
+  "main": "index.js", "types": "index.d.ts",
+  "capacitor": {"android":{"src":"android"},"ios":{"src":"ios"}}
+}

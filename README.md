@@ -64,3 +64,7 @@ http://127.0.0.1:5175/stockarena/
 ## Mobile reader and content service
 
 The shared website and Capacitor Android/iOS apps read daily content from a Supabase Edge API. Daily collection is a separate workflow; no reports are packaged into the app. See [mobile development and deployment](docs/mobile.md).
+
+## Mobile push and page updates
+
+See [mobile delivery](docs/mobile-delivery.md) for page update publishing, credential setup, and push commissioning. Web updates ship through signed Pages bundles; daily data comes from the hosted API. Push credentials and manufacturer channels must be provisioned before real device delivery is enabled.

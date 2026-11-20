@@ -1,0 +1,13 @@
+apply plugin: 'com.android.library'
+android {
+    namespace 'cc.shenhan.pocketpush'
+    compileSdk rootProject.ext.compileSdkVersion
+    defaultConfig { minSdkVersion rootProject.ext.minSdkVersion }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_21; targetCompatibility JavaVersion.VERSION_21 }
+}
+repositories { google(); mavenCentral() }
+dependencies {
+    implementation project(':capacitor-android')
+    implementation 'cn.jiguang.sdk:jpush:6.3.1'
+    implementation "androidx.core:core:$androidxCoreVersion"
+}
