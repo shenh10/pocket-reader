@@ -1,101 +1,37 @@
 name: Deploy Pocket Reader
-
 on:
   workflow_dispatch:
-    inputs:
-      backfill:
-        description: "Fetch the recent half-year before building"
-        required: false
-        default: false
-        type: boolean
-      start:
-        description: "Optional backfill start date, YYYY-MM-DD"
-        required: false
-      end:
-        description: "Optional backfill end date, YYYY-MM-DD"
-        required: false
-  schedule:
-    - cron: "15 1 * * *"
   push:
-    branches:
-      - main
-
+    branches: [main]
 permissions:
   contents: read
   pages: write
   id-token: write
-
 concurrency:
   group: github-pages
   cancel-in-progress: false
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
-
-      - name: Prepare site root
+          node-version: 24
+      - name: Install frontend dependencies
         run: |
-          rm -rf _site
-          mkdir -p _site
-          cp index.html _site/index.html
-          cp .nojekyll _site/.nojekyll
-          if [ -d nvidia-docs ]; then
-            cp -R nvidia-docs _site/nvidia-docs
-          fi
-
-      - name: Build Stockarena
-        working-directory: stockarena
+          npm ci
+          npm ci --prefix stockarena
+          npm ci --prefix ai-infra-board
+      - name: Build website against the content service
         env:
-          GITHUB_PAGES: "true"
           VITE_SUPABASE_URL: ${{ secrets.STOCKARENA_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.STOCKARENA_SUPABASE_ANON_KEY }}
-        run: |
-          npm ci
-          npm run build
-          mkdir -p ../_site/stockarena
-          cp -R dist/. ../_site/stockarena/
-
-      - name: Build AI Infra PR Radar
-        working-directory: ai-infra-board
-        env:
-          DATABASE_URL: ${{ secrets.AI_INFRA_DATABASE_URL }}
-          DATABASE_SSL: "true"
-          DATABASE_POOL_MAX: "8"
-          DATABASE_CONNECT_TIMEOUT_MS: "10000"
-          GITHUB_TOKEN: ${{ secrets.AI_INFRA_GITHUB_TOKEN || github.token }}
-          TIMEZONE: Asia/Shanghai
-        run: |
-          npm ci
-          if [ -z "$DATABASE_URL" ]; then
-            echo "::error::Set AI_INFRA_DATABASE_URL before deploying AI Infra Board."
-            exit 1
-          fi
-          npm run db:setup
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.backfill }}" = "true" ]; then
-            if [ -n "${{ inputs.start }}" ] && [ -n "${{ inputs.end }}" ]; then
-              npm run fetch-range -- --start "${{ inputs.start }}" --end "${{ inputs.end }}"
-            else
-              npm run fetch-range
-            fi
-          else
-            npm run catch-up
-          fi
-          npm run build:pages
-          mkdir -p ../_site/ai-infra-board
-          cp -R dist/. ../_site/ai-infra-board/
-
+        run: npm run build:web
       - uses: actions/configure-pages@v5
-
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
-
   deploy:
     environment:
       name: github-pages

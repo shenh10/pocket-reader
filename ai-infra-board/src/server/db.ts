@@ -662,7 +662,7 @@ export async function getDashboard(date: string, compact = false): Promise<Dashb
   };
 }
 
-export async function getTimeline(startDate: string, endDate: string, limit = 600): Promise<TimelineResponse> {
+export async function getTimeline(startDate: string, endDate: string, limit = 600, offset = 0): Promise<TimelineResponse> {
   const result = await pool.query(
     `
       SELECT
@@ -678,10 +678,10 @@ export async function getTimeline(startDate: string, endDate: string, limit = 60
       JOIN repositories r ON r.id = pr.repo_id
       LEFT JOIN pr_user_state state ON state.pr_id = pr.id
       WHERE pr.snapshot_date BETWEEN $1 AND $2
-      ORDER BY pr.merged_at DESC
-      LIMIT $3
+      ORDER BY pr.merged_at DESC, pr.id DESC
+      LIMIT $3 OFFSET $4
     `,
-    [startDate, endDate, limit]
+    [startDate, endDate, limit, offset]
   );
   const prs = result.rows.map(toPullRequestRecord);
   return {
@@ -708,7 +708,7 @@ function toAnnualHighlightRecord(row: Record<string, unknown>): AnnualHighlightR
   return record;
 }
 
-export async function getAnnualHighlights(year: number, limit = 60): Promise<AnnualHighlightsResponse> {
+export async function getAnnualHighlights(year: number, limit = 60, publicContent = false): Promise<AnnualHighlightsResponse> {
   const startDate = `${year}-01-01`;
   const endDate = `${year}-12-31`;
   const result = await pool.query(
@@ -736,7 +736,7 @@ export async function getAnnualHighlights(year: number, limit = 60): Promise<Ann
             + LEAST(COALESCE(pr.changed_files, 0), 40) * 0.35
             + LEAST(COALESCE(pr.additions, 0) + COALESCE(pr.deletions, 0), 4000) * 0.004
             + CASE WHEN pr.experiment_effect NOT LIKE '未在 PR%' THEN 12 ELSE 0 END
-            + CASE WHEN COALESCE(state.is_favorite, false) THEN 15 ELSE 0 END
+            + ${publicContent ? '0' : 'CASE WHEN COALESCE(state.is_favorite, false) THEN 15 ELSE 0 END'}
           ) AS highlight_score
         FROM pull_requests pr
         JOIN repositories r ON r.id = pr.repo_id

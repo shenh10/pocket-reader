@@ -4,3 +4,14 @@ _site/
 **/dist/
 **/.env
 **/.env.local
+_mobile/
+.cache/
+playwright-report/
+test-results/
+android/.gradle/
+android/local.properties
+android/app/build/
+android/build/
+*.keystore
+*.jks
+ai-infra-board/supabase/functions/pocket-reader/index.ts

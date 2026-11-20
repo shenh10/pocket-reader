@@ -1,3 +1,9 @@
+import { readService } from "../../../shared/service-client.js";
+import {
+  readContent,
+  isManifest,
+  isDashboard,
+} from "../../../shared/content-client.js";
 import {
   Bell,
   Bookmark,
@@ -8,7 +14,7 @@ import {
   RefreshCw,
   Search,
   Star,
-  TerminalSquare
+  TerminalSquare,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -20,13 +26,28 @@ import {
   PullRequestRecord,
   SnapshotSummary,
   StaticDataset,
-  TimelineResponse
+  TimelineResponse,
 } from "../shared/types";
 
 const importanceOrder: ImportanceLevel[] = [5, 4, 3, 2, 1];
 const ANNUAL_PICK_LIMIT = 12;
+const SERVICE_MODE = import.meta.env.VITE_READER_SERVICE === "true";
 const STATIC_MODE = import.meta.env.VITE_STATIC_DATA === "true";
-const STATIC_DATA_URL = `${import.meta.env.BASE_URL}data/static.json`;
+const LOCAL_DATA_BASE = new URL(
+  `${import.meta.env.BASE_URL}data/`,
+  document.baseURI,
+).href;
+const DATA_BASE = import.meta.env.VITE_PUBLIC_DATA_URL || LOCAL_DATA_BASE;
+const STATIC_DATA_URL = new URL("static.json", DATA_BASE).href;
+const reportContentStatus = (status: string) => {
+  document.documentElement.dataset.pocketContentStatus = status;
+  window.dispatchEvent(
+    new CustomEvent("pocket-content-status", { detail: status }),
+  );
+};
+const requestedDate = new URLSearchParams(window.location.search).get("date");
+const READER_MODE = STATIC_MODE || SERVICE_MODE;
+const serviceRecords = new Map<number, PullRequestRecord>();
 const LOCAL_STATE_KEY = "ai-infra-pr-radar-state-v1";
 
 const laneCopy: Record<ImportanceLevel, { title: string; caption: string }> = {
@@ -34,22 +55,33 @@ const laneCopy: Record<ImportanceLevel, { title: string; caption: string }> = {
   4: { title: "P4 深读", caption: "值得拆 diff" },
   3: { title: "P3 关注", caption: "跟进方向" },
   2: { title: "P2 扫读", caption: "维护与小改" },
-  1: { title: "P1 归档", caption: "留档即可" }
+  1: { title: "P1 归档", caption: "留档即可" },
 };
 
 type ViewMode = "all" | "unread" | "favorites" | "watch";
 type SurfaceMode = "board" | "timeline" | "picks";
-type DisplayPullRequest = PullRequestRecord & Partial<Pick<AnnualHighlightRecord, "highlightReason" | "highlightScore">>;
-type LocalPrState = Partial<Pick<PullRequestRecord, "isFavorite" | "isRead" | "watchLater" | "userNote">>;
+type DisplayPullRequest = PullRequestRecord &
+  Partial<Pick<AnnualHighlightRecord, "highlightReason" | "highlightScore">>;
+type LocalPrState = Partial<
+  Pick<PullRequestRecord, "isFavorite" | "isRead" | "watchLater" | "userNote">
+>;
 
 let staticDatasetPromise: Promise<StaticDataset> | null = null;
 const dayRequests = new Map<string, Promise<DashboardResponse>>();
-const shanghaiDateFormatter = new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Shanghai",year:"numeric",month:"2-digit",day:"2-digit"});
-const shanghaiDay = (timestamp: string) => shanghaiDateFormatter.format(new Date(timestamp));
+const shanghaiDateFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Shanghai",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+const shanghaiDay = (timestamp: string) =>
+  shanghaiDateFormatter.format(new Date(timestamp));
 
 function readLocalStates(): Record<string, LocalPrState> {
   try {
-    return JSON.parse(window.localStorage.getItem(LOCAL_STATE_KEY) ?? "{}") as Record<string, LocalPrState>;
+    return JSON.parse(
+      window.localStorage.getItem(LOCAL_STATE_KEY) ?? "{}",
+    ) as Record<string, LocalPrState>;
   } catch {
     return {};
   }
@@ -62,13 +94,13 @@ function writeLocalStates(states: Record<string, LocalPrState>) {
 function withLocalState<T extends PullRequestRecord>(pr: T): T {
   return {
     ...pr,
-    ...(readLocalStates()[String(pr.id)] ?? {})
+    ...(readLocalStates()[String(pr.id)] ?? {}),
   };
 }
 
 function withLocalStates<T extends PullRequestRecord>(prs: T[]): T[] {
   const states = readLocalStates();
-  return prs.map(pr => ({...pr, ...(states[String(pr.id)] ?? {})}));
+  return prs.map((pr) => ({ ...pr, ...(states[String(pr.id)] ?? {}) }));
 }
 
 function dashboardStats(prs: PullRequestRecord[]): DashboardResponse["stats"] {
@@ -84,7 +116,7 @@ function dashboardStats(prs: PullRequestRecord[]): DashboardResponse["stats"] {
     byCategory: prs.reduce<Record<string, number>>((acc, pr) => {
       acc[pr.category] = (acc[pr.category] ?? 0) + 1;
       return acc;
-    }, {})
+    }, {}),
   };
 }
 
@@ -96,43 +128,71 @@ function timelineStats(prs: PullRequestRecord[]): TimelineResponse["stats"] {
       const month = shanghaiDay(pr.mergedAt).slice(0, 7);
       acc[month] = (acc[month] ?? 0) + 1;
       return acc;
-    }, {})
+    }, {}),
   };
 }
 
 async function loadStaticDataset(): Promise<StaticDataset> {
   if (!staticDatasetPromise) {
-    staticDatasetPromise = fetch(STATIC_DATA_URL, { cache: "no-store" }).then(async (response) => {
-      if (!response.ok) {
-        throw new Error(`静态数据加载失败：${response.statusText}`);
-      }
-      return response.json() as Promise<StaticDataset>;
+    staticDatasetPromise = readContent<StaticDataset>(STATIC_DATA_URL, {
+      validate: isManifest,
+      onStatus: reportContentStatus,
+    }).catch((error) => {
+      staticDatasetPromise = null;
+      throw error;
     });
   }
   return staticDatasetPromise;
 }
 
-function findStaticPr(dataset: StaticDataset, id: number): PullRequestRecord | null {
+function findStaticPr(
+  dataset: StaticDataset,
+  id: number,
+): PullRequestRecord | null {
   for (const dashboard of Object.values(dataset.dashboards)) {
     const match = dashboard.prs.find((pr) => pr.id === id);
     if (match) {
       return match;
     }
   }
-  return dataset.timeline.prs.find((pr) => pr.id === id) ?? Object.values(dataset.highlights).flatMap(year => year.prs).find(pr => pr.id === id) ?? null;
+  return (
+    dataset.timeline.prs.find((pr) => pr.id === id) ??
+    Object.values(dataset.highlights)
+      .flatMap((year) => year.prs)
+      .find((pr) => pr.id === id) ??
+    null
+  );
 }
 
-async function loadStaticDay(dataset: StaticDataset, date: string): Promise<void> {
+async function loadStaticDay(
+  dataset: StaticDataset,
+  date: string,
+): Promise<void> {
   const file = dataset.dashboardFiles?.[date];
   if (!file || dataset.dashboards[date]) return;
-  if (!dayRequests.has(date)) dayRequests.set(date, fetch(`${import.meta.env.BASE_URL}data/${file}?v=${encodeURIComponent(dataset.generatedAt)}`).then(async response => {
-    if (!response.ok) throw new Error(`归档 ${date} 加载失败：${response.status}`);
-    return response.json() as Promise<DashboardResponse>;
-  }).catch(error => { dayRequests.delete(date); throw error; }));
+  if (!/^days\/\d{4}-\d{2}-\d{2}\.json$/.test(file))
+    throw new Error("归档路径不正确");
+  if (!dayRequests.has(date))
+    dayRequests.set(
+      date,
+      readContent<DashboardResponse>(
+        `${new URL(file, DATA_BASE).href}?v=${encodeURIComponent(dataset.generatedAt)}`,
+        {
+          validate: (value) => isDashboard(value) && value.date === date,
+          onStatus: reportContentStatus,
+        },
+      ).catch((error) => {
+        dayRequests.delete(date);
+        throw error;
+      }),
+    );
   dataset.dashboards[date] = await dayRequests.get(date)!;
 }
 
-async function staticDashboard(dataset: StaticDataset, date: string): Promise<DashboardResponse> {
+async function staticDashboard(
+  dataset: StaticDataset,
+  date: string,
+): Promise<DashboardResponse> {
   await loadStaticDay(dataset, date);
   const dashboard =
     dataset.dashboards[date] ??
@@ -141,38 +201,59 @@ async function staticDashboard(dataset: StaticDataset, date: string): Promise<Da
       snapshot: null,
       prs: [],
       repos: Object.values(dataset.dashboards)[0]?.repos ?? [],
-      stats: dashboardStats([])
+      stats: dashboardStats([]),
     } satisfies DashboardResponse);
   const prs = withLocalStates(dashboard.prs);
   return {
     ...dashboard,
     prs,
-    stats: dashboardStats(prs)
+    stats: dashboardStats(prs),
   };
 }
 
-async function staticTimeline(dataset: StaticDataset, start: string, end: string, _limit: number): Promise<TimelineResponse> {
+async function staticTimeline(
+  dataset: StaticDataset,
+  start: string,
+  end: string,
+  _limit: number,
+): Promise<TimelineResponse> {
   if (dataset.dashboardFiles) {
-    const dates = dataset.days.filter(day => day.date >= start && day.date <= end).map(day => day.date);
-    for (let i=0;i<dates.length;i+=6) await Promise.all(dates.slice(i,i+6).map(date => loadStaticDay(dataset,date)));
+    const dates = dataset.days
+      .filter((day) => day.date >= start && day.date <= end)
+      .map((day) => day.date);
+    for (let i = 0; i < dates.length; i += 6)
+      await Promise.all(
+        dates.slice(i, i + 6).map((date) => loadStaticDay(dataset, date)),
+      );
   }
-  const archive = dataset.dashboardFiles ? Object.values(dataset.dashboards).flatMap(day => day.prs) : dataset.timeline.prs;
-  const prs = withLocalStates(archive.filter(pr => { const day = shanghaiDay(pr.mergedAt); return day >= start && day <= end; })
-    .sort((a,b) => b.mergedAt.localeCompare(a.mergedAt)));
+  const archive = dataset.dashboardFiles
+    ? Object.values(dataset.dashboards).flatMap((day) => day.prs)
+    : dataset.timeline.prs;
+  const prs = withLocalStates(
+    archive
+      .filter((pr) => {
+        const day = shanghaiDay(pr.mergedAt);
+        return day >= start && day <= end;
+      })
+      .sort((a, b) => b.mergedAt.localeCompare(a.mergedAt)),
+  );
   return { start, end, prs, stats: timelineStats(prs) };
 }
 
-function staticHighlights(dataset: StaticDataset, year: number): AnnualHighlightsResponse {
+function staticHighlights(
+  dataset: StaticDataset,
+  year: number,
+): AnnualHighlightsResponse {
   const highlights =
     dataset.highlights[String(year)] ??
     ({
       year,
       generatedAt: dataset.generatedAt,
-      prs: []
+      prs: [],
     } satisfies AnnualHighlightsResponse);
   return {
     ...highlights,
-    prs: withLocalStates(highlights.prs)
+    prs: withLocalStates(highlights.prs),
   };
 }
 
@@ -190,7 +271,7 @@ async function staticApi<T>(path: string, options?: RequestInit): Promise<T> {
     const states = readLocalStates();
     states[String(id)] = {
       ...(states[String(id)] ?? {}),
-      ...patch
+      ...patch,
     };
     writeLocalStates(states);
     const pr = findStaticPr(dataset, id);
@@ -201,12 +282,17 @@ async function staticApi<T>(path: string, options?: RequestInit): Promise<T> {
   }
 
   if (method !== "GET") {
-    throw new Error("静态部署不能直接抓取 GitHub；请由本地任务或 GitHub Action 生成新数据。");
+    throw new Error(
+      "静态部署不能直接抓取 GitHub；请由本地任务或 GitHub Action 生成新数据。",
+    );
   }
 
   const url = new URL(path, window.location.origin);
   if (url.pathname === "/api/dashboard") {
-    return staticDashboard(dataset, url.searchParams.get("date") ?? dataset.defaultDate) as T;
+    return staticDashboard(
+      dataset,
+      url.searchParams.get("date") ?? dataset.defaultDate,
+    ) as T;
   }
   if (url.pathname === "/api/days") {
     return dataset.days as T;
@@ -216,17 +302,65 @@ async function staticApi<T>(path: string, options?: RequestInit): Promise<T> {
       dataset,
       url.searchParams.get("start") ?? dataset.timeline.start,
       url.searchParams.get("end") ?? dataset.timeline.end,
-      Number(url.searchParams.get("limit") ?? 1200)
+      Number(url.searchParams.get("limit") ?? 1200),
     ) as T;
   }
   if (url.pathname === "/api/highlights") {
-    return staticHighlights(dataset, Number(url.searchParams.get("year") ?? new Date().getFullYear())) as T;
+    return staticHighlights(
+      dataset,
+      Number(url.searchParams.get("year") ?? new Date().getFullYear()),
+    ) as T;
   }
 
   throw new Error(`静态数据未支持此接口：${url.pathname}`);
 }
 
+async function serviceApi<T>(path: string, options?: RequestInit): Promise<T> {
+  const url = new URL(path, window.location.origin);
+  if (options?.method === "PATCH") {
+    const id = Number(url.pathname.match(/\/prs\/(\d+)\/state$/)?.[1]);
+    const record = serviceRecords.get(id);
+    if (!record) throw Error("请先加载这条 PR");
+    const states = readLocalStates();
+    states[id] = { ...states[id], ...JSON.parse(String(options.body ?? "{}")) };
+    writeLocalStates(states);
+    return withLocalState(record) as T;
+  }
+  if (options?.method && options.method !== "GET")
+    throw Error("内容采集由服务端执行");
+  const route = url.pathname.replace("/api/", "");
+  if (route === "days")
+    return readService<T>("days", { onStatus: reportContentStatus });
+  const read = async (route: string) =>
+    readService<any>(route, { onStatus: reportContentStatus });
+  let data: any;
+  if (route === "timeline") {
+    let offset: number | null = 0;
+    const prs: PullRequestRecord[] = [];
+    do {
+      const query = new URLSearchParams(url.search);
+      query.set("offset", String(offset));
+      const page = await read("timeline?" + query);
+      prs.push(...page.prs);
+      offset = page.nextOffset;
+    } while (offset !== null);
+    data = {
+      start: url.searchParams.get("start"),
+      end: url.searchParams.get("end"),
+      prs,
+      stats: timelineStats(prs),
+    };
+  } else data = await read(route + url.search);
+  if (Array.isArray(data.prs)) {
+    data.prs.forEach((pr: PullRequestRecord) => serviceRecords.set(pr.id, pr));
+    data.prs = withLocalStates(data.prs);
+    if (route === "dashboard") data.stats = dashboardStats(data.prs);
+  }
+  return data as T;
+}
+
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
+  if (SERVICE_MODE) return serviceApi<T>(path, options);
   if (STATIC_MODE) {
     return staticApi<T>(path, options);
   }
@@ -234,8 +368,8 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(options?.headers ?? {})
-    }
+      ...(options?.headers ?? {}),
+    },
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
@@ -246,7 +380,7 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
 
 function todayLocal(): string {
   return new Date().toLocaleDateString("en-CA", {
-    timeZone: "Asia/Shanghai"
+    timeZone: "Asia/Shanghai",
   });
 }
 
@@ -254,7 +388,7 @@ function sixMonthsAgoLocal(): string {
   const date = new Date();
   date.setMonth(date.getMonth() - 6);
   return date.toLocaleDateString("en-CA", {
-    timeZone: "Asia/Shanghai"
+    timeZone: "Asia/Shanghai",
   });
 }
 
@@ -263,7 +397,7 @@ function formatTime(value: string): string {
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
-    minute: "2-digit"
+    minute: "2-digit",
   }).format(new Date(value));
 }
 
@@ -279,7 +413,7 @@ function computeStats(prs: PullRequestRecord[]) {
     total: prs.length,
     unread: prs.filter((pr) => !pr.isRead).length,
     favorites: prs.filter((pr) => pr.isFavorite).length,
-    watchLater: prs.filter((pr) => pr.watchLater).length
+    watchLater: prs.filter((pr) => pr.watchLater).length,
   };
 }
 
@@ -287,7 +421,7 @@ function ToolbarButton({
   active,
   title,
   children,
-  onClick
+  onClick,
 }: {
   active?: boolean;
   title: string;
@@ -295,7 +429,11 @@ function ToolbarButton({
   onClick: () => void;
 }) {
   return (
-    <button className={active ? "iconButton active" : "iconButton"} title={title} onClick={onClick}>
+    <button
+      className={active ? "iconButton active" : "iconButton"}
+      title={title}
+      onClick={onClick}
+    >
       {children}
     </button>
   );
@@ -303,7 +441,7 @@ function ToolbarButton({
 
 function PrCard({
   pr,
-  onPatch
+  onPatch,
 }: {
   pr: DisplayPullRequest;
   onPatch: (id: number, patch: Partial<PullRequestRecord>) => void;
@@ -313,18 +451,20 @@ function PrCard({
     previousBehavior: "未提及",
     newBehavior: "未提及",
     rationale: "未提及",
-    experiments: "未提及"
+    experiments: "未提及",
   };
   const reviewRows = [
     ["动机", evaluation.motivation],
     ["之前", evaluation.previousBehavior],
     ["之后", evaluation.newBehavior],
     ["合理性", evaluation.rationale],
-    ["实验/效果", evaluation.experiments]
+    ["实验/效果", evaluation.experiments],
   ];
 
   return (
-    <article className={`${pr.isRead ? "prCard read" : "prCard"} priority-${pr.importance}`}>
+    <article
+      className={`${pr.isRead ? "prCard read" : "prCard"} priority-${pr.importance}`}
+    >
       <div className="cardTopline">
         <span className="repoPill">{pr.repoDisplayName}</span>
         <span className="prNumber">#{pr.number}</span>
@@ -397,7 +537,13 @@ function PrCard({
         >
           <Bookmark size={16} />
         </ToolbarButton>
-        <a className="iconButton" title="打开 PR" href={pr.url} target="_blank" rel="noreferrer">
+        <a
+          className="iconButton"
+          title="打开 PR"
+          href={pr.url}
+          target="_blank"
+          rel="noreferrer"
+        >
           <ExternalLink size={16} />
         </a>
       </div>
@@ -409,7 +555,7 @@ function filterPullRequests(
   prs: DisplayPullRequest[],
   query: string,
   mode: ViewMode,
-  category: string
+  category: string,
 ): DisplayPullRequest[] {
   const q = query.trim().toLowerCase();
   const qWithoutHash = q.startsWith("#") ? q.slice(1) : q;
@@ -435,16 +581,21 @@ function filterPullRequests(
       pr.evaluation?.newBehavior,
       pr.evaluation?.rationale,
       pr.evaluation?.experiments,
-      pr.highlightReason
+      pr.highlightReason,
     ]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
-    return searchable.includes(q) || (!!qWithoutHash && searchable.includes(qWithoutHash));
+    return (
+      searchable.includes(q) ||
+      (!!qWithoutHash && searchable.includes(qWithoutHash))
+    );
   });
 }
 
-function groupByDate(prs: DisplayPullRequest[]): Array<[string, DisplayPullRequest[]]> {
+function groupByDate(
+  prs: DisplayPullRequest[],
+): Array<[string, DisplayPullRequest[]]> {
   const grouped = new Map<string, DisplayPullRequest[]>();
   for (const pr of prs) {
     const key = shanghaiDay(pr.mergedAt);
@@ -458,7 +609,7 @@ function ChronicleView({
   caption,
   prs,
   emptyCopy,
-  onPatch
+  onPatch,
 }: {
   title: string;
   caption: string;
@@ -516,14 +667,22 @@ export function App() {
   });
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [timeline, setTimeline] = useState<TimelineResponse | null>(null);
-  const [highlights, setHighlights] = useState<AnnualHighlightsResponse | null>(null);
+  const [highlights, setHighlights] = useState<AnnualHighlightsResponse | null>(
+    null,
+  );
   const [days, setDays] = useState<SnapshotSummary[]>([]);
   const [visibleTimeline, setVisibleTimeline] = useState(200);
+  const [serviceInfo, setServiceInfo] = useState<{
+    latestDate: string;
+    totalPrs: number;
+  } | null>(null);
   const [staticInfo, setStaticInfo] = useState<StaticDataset | null>(null);
   const [surface, setSurface] = useState<SurfaceMode>("board");
   const [timelineStart, setTimelineStart] = useState(sixMonthsAgoLocal);
   const [timelineEnd, setTimelineEnd] = useState(todayLocal);
-  const [highlightYear, setHighlightYear] = useState(() => Number(todayLocal().slice(0, 4)));
+  const [highlightYear, setHighlightYear] = useState(() =>
+    Number(todayLocal().slice(0, 4)),
+  );
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<ViewMode>("all");
   const [category, setCategory] = useState("all");
@@ -533,13 +692,36 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!dashboard?.snapshot || dashboard.date !== date) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("date", date);
+    history.replaceState(null, "", url);
+  }, [date, dashboard]);
+
+  async function refreshStatic() {
+    if (SERVICE_MODE) {
+      await load(date);
+      return;
+    }
+    staticDatasetPromise = null;
+    dayRequests.clear();
+    try {
+      const dataset = await loadStaticDataset();
+      setStaticInfo(dataset);
+      await load(date);
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
   async function load(selectedDate = date) {
     setLoading(true);
     setError(null);
     try {
       const [dashboardData, dayData] = await Promise.all([
         api<DashboardResponse>(`/api/dashboard?date=${selectedDate}`),
-        api<SnapshotSummary[]>("/api/days")
+        api<SnapshotSummary[]>("/api/days"),
       ]);
       setDashboard(dashboardData);
       setDays(dayData);
@@ -551,12 +733,28 @@ export function App() {
   }
 
   useEffect(() => {
-    if (STATIC_MODE) loadStaticDataset().then(data => {
-      setStaticInfo(data);
-      if (!new URLSearchParams(window.location.search).has("date") && !data.days.some(day => day.date === todayLocal())) setDate(data.defaultDate);
-    }).catch(err => setError(err.message));
+    if (SERVICE_MODE)
+      readService<any>("summary", { onStatus: reportContentStatus })
+        .then((data) => {
+          setServiceInfo(data);
+          if (!requestedDate && data.latestDate) setDate(data.latestDate);
+        })
+        .catch((err) => setError(err.message));
+    if (STATIC_MODE)
+      loadStaticDataset()
+        .then((data) => {
+          setStaticInfo(data);
+          if (
+            !requestedDate &&
+            !data.days.some((day) => day.date === todayLocal())
+          )
+            setDate(data.defaultDate);
+        })
+        .catch((err) => setError(err.message));
   }, []);
-  useEffect(() => { setVisibleTimeline(200); }, [timelineStart,timelineEnd,query,mode,category]);
+  useEffect(() => {
+    setVisibleTimeline(200);
+  }, [timelineStart, timelineEnd, query, mode, category]);
 
   useEffect(() => {
     void load(date);
@@ -564,13 +762,15 @@ export function App() {
 
   async function loadTimeline() {
     const data = await api<TimelineResponse>(
-      `/api/timeline?start=${timelineStart}&end=${timelineEnd}&limit=8000`
+      `/api/timeline?start=${timelineStart}&end=${timelineEnd}&limit=8000`,
     );
     setTimeline(data);
   }
 
   async function loadHighlights() {
-    const data = await api<AnnualHighlightsResponse>(`/api/highlights?year=${highlightYear}&limit=${ANNUAL_PICK_LIMIT}`);
+    const data = await api<AnnualHighlightsResponse>(
+      `/api/highlights?year=${highlightYear}&limit=${ANNUAL_PICK_LIMIT}`,
+    );
     setHighlights(data);
   }
 
@@ -588,28 +788,38 @@ export function App() {
 
   const categories = useMemo(() => {
     const map = new Map<string, string>();
-    [...(dashboard?.prs ?? []), ...(timeline?.prs ?? []), ...(highlights?.prs ?? [])].forEach((pr) =>
-      map.set(pr.category, pr.categoryLabel)
-    );
+    [
+      ...(dashboard?.prs ?? []),
+      ...(timeline?.prs ?? []),
+      ...(highlights?.prs ?? []),
+    ].forEach((pr) => map.set(pr.category, pr.categoryLabel));
     return Array.from(map.entries());
   }, [dashboard, timeline, highlights]);
 
   const boardFiltered = useMemo(
     () => filterPullRequests(dashboard?.prs ?? [], query, mode, category),
-    [dashboard, mode, category, query]
+    [dashboard, mode, category, query],
   );
   const timelineFiltered = useMemo(
     () => filterPullRequests(timeline?.prs ?? [], query, mode, category),
-    [timeline, mode, category, query]
+    [timeline, mode, category, query],
   );
   const highlightsFiltered = useMemo(
     () => filterPullRequests(highlights?.prs ?? [], query, mode, category),
-    [highlights, mode, category, query]
+    [highlights, mode, category, query],
   );
   const activePrs =
-    surface === "timeline" ? timeline?.prs ?? [] : surface === "picks" ? highlights?.prs ?? [] : dashboard?.prs ?? [];
+    surface === "timeline"
+      ? (timeline?.prs ?? [])
+      : surface === "picks"
+        ? (highlights?.prs ?? [])
+        : (dashboard?.prs ?? []);
   const activeFiltered =
-    surface === "timeline" ? timelineFiltered : surface === "picks" ? highlightsFiltered : boardFiltered;
+    surface === "timeline"
+      ? timelineFiltered
+      : surface === "picks"
+        ? highlightsFiltered
+        : boardFiltered;
 
   const liveStats = useMemo(() => computeStats(activePrs), [activePrs]);
 
@@ -617,11 +827,16 @@ export function App() {
     setFetching(true);
     setError(null);
     try {
-      const result = await api<{ prCount: number; warnings: string[] }>("/api/fetch", {
-        method: "POST",
-        body: JSON.stringify({ date, notify: true })
-      });
-      setNotice(`已归档 ${result.prCount} 个 PR${result.warnings.length ? "，部分仓库有警告" : ""}`);
+      const result = await api<{ prCount: number; warnings: string[] }>(
+        "/api/fetch",
+        {
+          method: "POST",
+          body: JSON.stringify({ date, notify: true }),
+        },
+      );
+      setNotice(
+        `已归档 ${result.prCount} 个 PR${result.warnings.length ? "，部分仓库有警告" : ""}`,
+      );
       await load(date);
     } catch (err) {
       setError((err as Error).message);
@@ -636,10 +851,14 @@ export function App() {
     try {
       const result = await api<FetchRangeResponse>("/api/fetch-range", {
         method: "POST",
-        body: JSON.stringify({ start: timelineStart, end: timelineEnd, notify: true })
+        body: JSON.stringify({
+          start: timelineStart,
+          end: timelineEnd,
+          notify: true,
+        }),
       });
       setNotice(
-        `已补档 ${result.start} 到 ${result.end}：${result.dayCount} 天 / ${result.prCount} 条归档${result.warnings.length ? "，部分仓库有警告" : ""}`
+        `已补档 ${result.start} 到 ${result.end}：${result.dayCount} 天 / ${result.prCount} 条归档${result.warnings.length ? "，部分仓库有警告" : ""}`,
       );
       await Promise.all([load(date), loadTimeline(), loadHighlights()]);
       setSurface("timeline");
@@ -654,33 +873,47 @@ export function App() {
     const previousDashboard = dashboard;
     const previousTimeline = timeline;
     const previousHighlights = highlights;
-    const patchList = <T extends PullRequestRecord>(prs: T[] | undefined): T[] | undefined =>
+    const patchList = <T extends PullRequestRecord>(
+      prs: T[] | undefined,
+    ): T[] | undefined =>
       prs?.map((pr) => (pr.id === id ? ({ ...pr, ...patch } as T) : pr));
 
-    setDashboard((current) => (current ? { ...current, prs: patchList(current.prs) ?? current.prs } : current));
-    setTimeline((current) => (current ? { ...current, prs: patchList(current.prs) ?? current.prs } : current));
-    setHighlights((current) => (current ? { ...current, prs: patchList(current.prs) ?? current.prs } : current));
+    setDashboard((current) =>
+      current
+        ? { ...current, prs: patchList(current.prs) ?? current.prs }
+        : current,
+    );
+    setTimeline((current) =>
+      current
+        ? { ...current, prs: patchList(current.prs) ?? current.prs }
+        : current,
+    );
+    setHighlights((current) =>
+      current
+        ? { ...current, prs: patchList(current.prs) ?? current.prs }
+        : current,
+    );
 
     try {
       const updated = await api<PullRequestRecord>(`/api/prs/${id}/state`, {
         method: "PATCH",
-        body: JSON.stringify(patch)
+        body: JSON.stringify(patch),
       });
       setDashboard((current) =>
         current
           ? {
               ...current,
-              prs: current.prs.map((pr) => (pr.id === id ? updated : pr))
+              prs: current.prs.map((pr) => (pr.id === id ? updated : pr)),
             }
-          : current
+          : current,
       );
       setTimeline((current) =>
         current
           ? {
               ...current,
-              prs: current.prs.map((pr) => (pr.id === id ? updated : pr))
+              prs: current.prs.map((pr) => (pr.id === id ? updated : pr)),
             }
-          : current
+          : current,
       );
       setHighlights((current) =>
         current
@@ -690,12 +923,12 @@ export function App() {
                 pr.id === id
                   ? {
                       ...pr,
-                      ...updated
+                      ...updated,
                     }
-                  : pr
-              )
+                  : pr,
+              ),
             }
-          : current
+          : current,
       );
     } catch (err) {
       setDashboard(previousDashboard);
@@ -712,10 +945,12 @@ export function App() {
       }
       if ("Notification" in window && Notification.permission === "granted") {
         new Notification("AI Infra Daily", {
-          body: "浏览器通知测试已发送。"
+          body: "浏览器通知测试已发送。",
         });
       }
-      setNotice("静态站点只能发送浏览器通知，定时桌面通知由本地任务或 GitHub Action 负责");
+      setNotice(
+        "静态站点只能发送浏览器通知，定时桌面通知由本地任务或 GitHub Action 负责",
+      );
       return;
     }
     await api("/api/notify/test", { method: "POST", body: "{}" });
@@ -747,25 +982,73 @@ export function App() {
             value={date}
             onChange={(event) => setDate(event.target.value)}
           />
-          {!STATIC_MODE && (
+          {!READER_MODE && (
             <>
-              <button className="commandButton" onClick={fetchDate} disabled={fetching}>
-                {fetching ? <Loader2 className="spin" size={16} /> : <RefreshCw size={16} />}
+              <button
+                className="commandButton"
+                onClick={fetchDate}
+                disabled={fetching}
+              >
+                {fetching ? (
+                  <Loader2 className="spin" size={16} />
+                ) : (
+                  <RefreshCw size={16} />
+                )}
                 <span>更新</span>
               </button>
-              <button className="commandButton" onClick={fetchHalfYear} disabled={backfilling}>
-                {backfilling ? <Loader2 className="spin" size={16} /> : <RefreshCw size={16} />}
+              <button
+                className="commandButton"
+                onClick={fetchHalfYear}
+                disabled={backfilling}
+              >
+                {backfilling ? (
+                  <Loader2 className="spin" size={16} />
+                ) : (
+                  <RefreshCw size={16} />
+                )}
                 <span>半年</span>
               </button>
             </>
           )}
-          <button className="iconButton" title="测试桌面通知" onClick={testNotification}>
-            <Bell size={17} />
-          </button>
+          {READER_MODE ? (
+            <button
+              className="iconButton"
+              title="刷新日报"
+              aria-label="刷新日报"
+              onClick={refreshStatic}
+              disabled={loading}
+            >
+              <RefreshCw size={17} />
+            </button>
+          ) : (
+            <button
+              className="iconButton"
+              title="测试桌面通知"
+              onClick={testNotification}
+            >
+              <Bell size={17} />
+            </button>
+          )}
         </div>
       </section>
 
-      {staticInfo && <div className="toast">数据截至 {staticInfo.defaultDate} · 导出于 {formatTime(staticInfo.generatedAt)} · {staticInfo.timeline.stats.total.toLocaleString()} 条归档。解读为规则提取，基于 PR 正文和最多前 30 个文件摘要，未审阅完整 diff；完整证据请查看原 PR。{staticInfo.defaultDate < todayLocal() && " 当前为历史快照，等待后台更新。"}</div>}
+      {serviceInfo && (
+        <div className="toast">
+          服务数据截至 {serviceInfo.latestDate} ·{" "}
+          {serviceInfo.totalPrs.toLocaleString()} 条归档。日报由服务端持续更新。
+        </div>
+      )}
+      {staticInfo && (
+        <div className="toast">
+          数据截至 {staticInfo.defaultDate} · 导出于{" "}
+          {formatTime(staticInfo.generatedAt)} ·{" "}
+          {staticInfo.timeline.stats.total.toLocaleString()}{" "}
+          条归档。解读为规则提取，基于 PR 正文和最多前 30 个文件摘要，未审阅完整
+          diff；完整证据请查看原 PR。
+          {staticInfo.defaultDate < todayLocal() &&
+            " 当前为历史快照，等待后台更新。"}
+        </div>
+      )}
       <section className="statusBand">
         <div className="stat">
           <span>{liveStats.total}</span>
@@ -793,7 +1076,11 @@ export function App() {
                   ? formatTime(snapshot.fetchedAt)
                   : "not fetched"}
           </strong>
-          <span>{surface === "board" ? snapshot?.status ?? "empty snapshot" : surface}</span>
+          <span>
+            {surface === "board"
+              ? (snapshot?.status ?? "empty snapshot")
+              : surface}
+          </span>
         </div>
       </section>
 
@@ -801,7 +1088,7 @@ export function App() {
         {[
           ["board", "看板"],
           ["timeline", "时间线"],
-          ["picks", "年度精选"]
+          ["picks", "年度精选"],
         ].map(([value, label]) => (
           <button
             key={value}
@@ -814,8 +1101,16 @@ export function App() {
         <div className="rangeControls">
           {surface === "timeline" ? (
             <>
-              <input type="date" value={timelineStart} onChange={(event) => setTimelineStart(event.target.value)} />
-              <input type="date" value={timelineEnd} onChange={(event) => setTimelineEnd(event.target.value)} />
+              <input
+                type="date"
+                value={timelineStart}
+                onChange={(event) => setTimelineStart(event.target.value)}
+              />
+              <input
+                type="date"
+                value={timelineEnd}
+                onChange={(event) => setTimelineEnd(event.target.value)}
+              />
             </>
           ) : surface === "picks" ? (
             <input
@@ -837,7 +1132,9 @@ export function App() {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="搜索 #4401 / PR 号 / repo / 标题 / 解读"
           />
-          {query.trim() && <span className="searchCount">{activeFiltered.length}</span>}
+          {query.trim() && (
+            <span className="searchCount">{activeFiltered.length}</span>
+          )}
         </div>
 
         <div className="segmented">
@@ -845,7 +1142,7 @@ export function App() {
             ["all", "全部"],
             ["unread", "未读"],
             ["favorites", "收藏"],
-            ["watch", "稍后"]
+            ["watch", "稍后"],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -857,7 +1154,10 @@ export function App() {
           ))}
         </div>
 
-        <select value={category} onChange={(event) => setCategory(event.target.value)}>
+        <select
+          value={category}
+          onChange={(event) => setCategory(event.target.value)}
+        >
           <option value="all">全部分类</option>
           {categories.map(([value, label]) => (
             <option key={value} value={value}>
@@ -901,7 +1201,9 @@ export function App() {
                 </header>
                 <div className="laneStack">
                   {lane.length ? (
-                    lane.map((pr) => <PrCard key={pr.id} pr={pr} onPatch={patchPr} />)
+                    lane.map((pr) => (
+                      <PrCard key={pr.id} pr={pr} onPatch={patchPr} />
+                    ))
                   ) : (
                     <EmptyLane />
                   )}
@@ -916,13 +1218,20 @@ export function App() {
         <ChronicleView
           title="半年度时间线"
           caption={`${timeline?.start ?? timelineStart} 到 ${timeline?.end ?? timelineEnd}，按合并时间倒序；筛选结果 ${timelineFiltered.length} 条`}
-          prs={timelineFiltered.slice(0,visibleTimeline)}
+          prs={timelineFiltered.slice(0, visibleTimeline)}
           emptyCopy="半年度时间线还没有归档记录"
           onPatch={patchPr}
         />
       )}
 
-      {surface === "timeline" && timelineFiltered.length > visibleTimeline && <button className="commandButton" onClick={() => setVisibleTimeline(value => value+200)}>已显示 {visibleTimeline} / {timelineFiltered.length}，加载更多</button>}
+      {surface === "timeline" && timelineFiltered.length > visibleTimeline && (
+        <button
+          className="commandButton"
+          onClick={() => setVisibleTimeline((value) => value + 200)}
+        >
+          已显示 {visibleTimeline} / {timelineFiltered.length}，加载更多
+        </button>
+      )}
       {surface === "picks" && (
         <ChronicleView
           title="年度精选"
