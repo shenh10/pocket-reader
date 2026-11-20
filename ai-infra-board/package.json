@@ -29,7 +29,8 @@
     "db:docker:down": "docker compose down",
     "db:docker:logs": "docker compose logs -f postgres",
     "build:pages": "npm run export-static -- --out public/data && tsc --noEmit && VITE_STATIC_DATA=true vite build",
-    "push:flush": "tsx src/server/push-worker.ts"
+    "push:flush": "tsx src/server/push-worker.ts",
+    "db:push-setup": "supabase db query --linked --file db/push-schema.sql"
   },
   "dependencies": {
     "dotenv": "^16.4.7",

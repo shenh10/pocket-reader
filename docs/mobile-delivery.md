@@ -20,6 +20,10 @@ The manifest requires an exact native `versionName` / `MARKETING_VERSION` match.
 
 A successful provider response means accepted for delivery, not proof that the phone displayed it. A timeout after acceptance can result in a repeated alert on retry; this is not an exactly-once transport. APNs collapse IDs coalesce pending messages. Uninstall is detected when a provider rejects a token; stale subscriptions also stop being selected after 180 days without renewal.
 
+## Database setup
+
+Apply `ai-infra-board/db/push-schema.sql` once with the Supabase project administrator (`supabase db query --linked --file db/push-schema.sql` from ai-infra-board). The existing `aiinfra_app` role intentionally cannot create schemas. Runtime access is limited to the private push tables; anon/authenticated/service_role receive no grants. Normal `db:setup` continues to work without administrator privileges.
+
 ## Credentials and commissioning still required
 
 Android uses JPush 6.3.1. Create an Android app for `cc.shenhan.pocketreader` and set GitHub Actions secrets `JPUSH_APP_KEY` and `JPUSH_MASTER_SECRET`. The app key is a public SDK identifier compiled into the Android package; the master secret stays server-side. Without the app key, the APK deliberately refuses to register rather than reporting false success.
