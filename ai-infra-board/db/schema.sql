@@ -78,3 +78,6 @@ CREATE TABLE IF NOT EXISTS pr_user_state (
   user_note TEXT NOT NULL DEFAULT '',
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Collector upserts deliberately leave independent, evidence-backed analyses intact.
+ALTER TABLE pull_requests ADD COLUMN IF NOT EXISTS deep_dive JSONB;
