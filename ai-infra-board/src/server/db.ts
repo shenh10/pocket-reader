@@ -3,6 +3,7 @@ import path from "node:path";
 import pg from "pg";
 const { Pool } = pg;
 import {
+  DeepDive,
   AnnualHighlightRecord,
   AnnualHighlightsResponse,
   DashboardResponse,
@@ -443,35 +444,14 @@ function toPullRequestRecord(row: Record<string, unknown>): PullRequestRecord {
   const labels = Array.isArray(row.labels) ? (row.labels as string[]) : [];
   const repoFullName = String(row.full_name);
   const repoDisplayName = String(row.display_name);
-  const [owner = "", name = ""] = repoFullName.split("/");
-  const fallbackAnalysis = [row.motivation, row.previous_behavior, row.new_behavior, row.rationale, row.experiment_effect].every(Boolean) ? null : analyzePullRequest(
-    {
-      title: String(row.title),
-      body: row.body == null ? null : String(row.body),
-      labels,
-      additions: row.additions == null ? null : Number(row.additions),
-      deletions: row.deletions == null ? null : Number(row.deletions),
-      changedFiles: row.changed_files == null ? null : Number(row.changed_files),
-      files: filesFromRaw(row.raw)
-    },
-    {
-      id: Number(row.repo_id),
-      fullName: repoFullName,
-      owner,
-      name,
-      displayName: repoDisplayName,
-      homepageUrl: "",
-      description: "",
-      enabled: true,
-      importanceWeight: Number(row.repo_importance_weight ?? 3)
-    }
-  );
+  const deepDive = (row.deep_dive ?? null) as DeepDive | null;
+  // Never return historical template prose as analysis, including to older APKs.
   const evaluation = {
-    motivation: String(row.motivation || fallbackAnalysis?.evaluation.motivation),
-    previousBehavior: String(row.previous_behavior || fallbackAnalysis?.evaluation.previousBehavior),
-    newBehavior: String(row.new_behavior || fallbackAnalysis?.evaluation.newBehavior),
-    rationale: String(row.rationale || fallbackAnalysis?.evaluation.rationale),
-    experiments: String(row.experiment_effect || fallbackAnalysis?.evaluation.experiments)
+    motivation: deepDive?.problem.text ?? "",
+    previousBehavior: deepDive?.before.text ?? "",
+    newBehavior: deepDive?.after.text ?? "",
+    rationale: deepDive?.tradeoff.text ?? "",
+    experiments: deepDive?.validation.text ?? ""
   };
   return {
     id: Number(row.id),
@@ -498,9 +478,10 @@ function toPullRequestRecord(row: Record<string, unknown>): PullRequestRecord {
     categoryLabel: CATEGORY_LABELS[category],
     importance,
     importanceLabel: IMPORTANCE_LABELS[importance],
-    importanceReason: String(row.importance_reason),
-    learningComment: String(row.learning_comment),
+    importanceReason: "",
+    learningComment: deepDive?.summary.text ?? "尚未完成代码分析",
     evaluation,
+    deepDive,
     isFavorite: Boolean(row.is_favorite),
     isRead: Boolean(row.is_read),
     watchLater: Boolean(row.watch_later),
@@ -593,7 +574,7 @@ const compactPrColumns = `
     pr.url, pr.author, pr.author_avatar_url, pr.merged_at, pr.created_at, pr.updated_at,
     pr.base_ref, pr.head_ref, pr.additions, pr.deletions, pr.changed_files, pr.labels,
     pr.category, pr.importance, pr.importance_reason, pr.learning_comment,
-    pr.motivation, pr.previous_behavior, pr.new_behavior, pr.rationale, pr.experiment_effect
+    pr.motivation, pr.previous_behavior, pr.new_behavior, pr.rationale, pr.experiment_effect, pr.deep_dive
   `;
 
 export async function getDashboard(date: string, compact = false): Promise<DashboardResponse> {
@@ -623,7 +604,7 @@ export async function getDashboard(date: string, compact = false): Promise<Dashb
         JOIN repositories r ON r.id = pr.repo_id
         LEFT JOIN pr_user_state state ON state.pr_id = pr.id
         WHERE pr.snapshot_date = $1
-        ORDER BY pr.importance DESC, pr.merged_at DESC
+        ORDER BY (pr.deep_dive IS NOT NULL) DESC, pr.importance DESC, pr.merged_at DESC
       `,
       [date]
     )
@@ -705,7 +686,7 @@ export async function getTimeline(startDate: string, endDate: string, limit = 60
 function toAnnualHighlightRecord(row: Record<string, unknown>): AnnualHighlightRecord {
   const record = toPullRequestRecord(row) as AnnualHighlightRecord;
   record.highlightScore = Number(row.highlight_score ?? 0);
-  const evidence = record.evaluation.experiments.startsWith("未在 PR") ? "缺少显式实验" : "含验证/效果";
+  const evidence = record.deepDive ? "附代码分析" : "尚未分析";
   record.highlightReason = `${record.importanceLabel} · ${record.categoryLabel} · ${evidence} · ${record.changedFiles ?? "?"} files`;
   return record;
 }
@@ -840,7 +821,7 @@ export async function getTopPullRequestsForDate(date: string, limit = 3): Promis
       JOIN repositories r ON r.id = pr.repo_id
       LEFT JOIN pr_user_state state ON state.pr_id = pr.id
       WHERE pr.snapshot_date = $1
-      ORDER BY pr.importance DESC, pr.merged_at DESC
+      ORDER BY (pr.deep_dive IS NOT NULL) DESC, pr.importance DESC, pr.merged_at DESC
       LIMIT $2
     `,
     [date, limit]
