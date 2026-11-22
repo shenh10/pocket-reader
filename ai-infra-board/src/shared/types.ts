@@ -32,6 +32,35 @@ export interface PullRequestEvaluation {
   experiments: string;
 }
 
+export interface AnalysisClaim {
+  text: string;
+  evidenceIds: string[];
+}
+
+export interface AnalysisEvidence {
+  id: string;
+  kind: "description" | "diff" | "source";
+  label: string;
+  url: string;
+}
+
+export interface DeepDive {
+  version: 1;
+  generatedAt: string;
+  generator: string;
+  headSha: string;
+  baseSha: string;
+  summary: AnalysisClaim;
+  problem: AnalysisClaim;
+  before: AnalysisClaim;
+  after: AnalysisClaim;
+  tradeoff: AnalysisClaim;
+  validation: AnalysisClaim;
+  walkthrough: { evidenceId: string; excerpt: string; explanation: string };
+  evidence: AnalysisEvidence[];
+  coverage: { filesTotal: number; filesReviewed: number; notes: string[] };
+}
+
 export interface PullRequestRecord {
   id: number;
   repoId: number;
@@ -60,6 +89,7 @@ export interface PullRequestRecord {
   importanceReason: string;
   learningComment: string;
   evaluation: PullRequestEvaluation;
+  deepDive?: DeepDive | null;
   isFavorite: boolean;
   isRead: boolean;
   watchLater: boolean;

@@ -31,6 +31,25 @@ jobs:
           npm ci
           npm run db:setup
           npm run catch-up
+      - name: Write evidence-backed code analyses
+        working-directory: ai-infra-board
+        continue-on-error: true
+        env:
+          DATABASE_URL: ${{ secrets.AI_INFRA_DATABASE_URL }}
+          DATABASE_SSL: "true"
+          GITHUB_TOKEN: ${{ secrets.AI_INFRA_GITHUB_TOKEN || github.token }}
+          TIMEZONE: Asia/Shanghai
+          DEEP_DIVE_API_KEY: ${{ secrets.DEEP_DIVE_API_KEY }}
+          DEEP_DIVE_BASE_URL: ${{ vars.DEEP_DIVE_BASE_URL }}
+          DEEP_DIVE_MODEL: ${{ vars.DEEP_DIVE_MODEL }}
+        run: |
+          if [ -z "$DEEP_DIVE_API_KEY" ] || [ -z "$DEEP_DIVE_BASE_URL" ] || [ -z "$DEEP_DIVE_MODEL" ]; then
+            echo "::warning::Code analysis provider is not configured. Collected PRs remain explicitly unanalyzed."
+            echo "Code deep dives: not configured; no template fallback." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          npm run deep-dive -- run --date yesterday
+          npm run deep-dive -- run --date today
       - name: Enqueue the latest issue and deliver device notifications
         working-directory: ai-infra-board
         env:

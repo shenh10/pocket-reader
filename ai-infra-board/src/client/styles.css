@@ -1159,3 +1159,19 @@ select {
     gap: 3px;
   }
 }
+
+/* Code analysis is prose, with a readable measure and local code scrolling. */
+.analysisPending { margin: 10px 0; color: var(--muted); font-size: 12px; }
+.analysisSummary { margin: 10px 0 14px; line-height: 1.8; font-size: 14px; color: var(--ink); overflow-wrap: anywhere; }
+.deepDiveBody { padding: 4px 14px 14px; border-top: 1px solid var(--line-soft); }
+.analysisSection { margin: 18px 0; min-width: 0; }
+.analysisSection h3 { font-size: 13px; margin: 0 0 8px; color: var(--ink); }
+.analysisSection p { font-size: 14px; line-height: 1.9; margin: 0; white-space: pre-line; overflow-wrap: anywhere; color: var(--ink-soft); }
+.analysisCitations { display: inline; font-size: 11px; }
+.analysisCitations a { margin-right: 5px; color: #386052; text-decoration: underline; text-underline-offset: 3px; }
+.analysisSection pre { max-width: 100%; overflow-x: auto; padding: 12px; border-radius: 5px; background: #18261f; color: #e2ece5; font-size: 11px; line-height: 1.7; tab-size: 2; }
+.analysisCoverage { border-top: 1px solid var(--line); padding-top: 12px; color: var(--muted); font-size: 11px; line-height: 1.7; overflow-wrap: anywhere; }
+.analysisCoverage p { margin: 4px 0; }
+.analysisCoverage a { color: inherit; }
+.evidenceToggle { border: 0; padding: 8px 0; background: none; color: var(--ink-soft); font: inherit; cursor: pointer; }
+@media (max-width: 600px) { .deepDiveBody { padding: 0 10px 12px; } .analysisSection p { font-size: 14px; } }

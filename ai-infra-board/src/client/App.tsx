@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  AnalysisClaim,
+  DeepDive,
   AnnualHighlightRecord,
   AnnualHighlightsResponse,
   DashboardResponse,
@@ -439,6 +441,42 @@ function ToolbarButton({
   );
 }
 
+function DeepDiveView({ analysis }: { analysis: DeepDive }) {
+  const [showEvidence, setShowEvidence] = useState(false);
+  const citations = (claim: AnalysisClaim) => (
+    <span className="analysisCitations">{claim.evidenceIds.map(id => {
+      const source = analysis.evidence.find(item => item.id === id);
+      return source ? <a key={id} href={source.url} target="_blank" rel="noreferrer" title={source.label}>[{id}]</a> : null;
+    })}</span>
+  );
+  const rows: [string, AnalysisClaim][] = [
+    ["问题与触发条件", analysis.problem], ["旧路径", analysis.before],
+    ["改动机制", analysis.after], ["代价与边界", analysis.tradeoff], ["验证与效果", analysis.validation],
+  ];
+  return <div className="deepDive">
+    <p className="analysisSummary">{analysis.summary.text} {citations(analysis.summary)}</p>
+    <details className="reviewDisclosure">
+      <summary>代码深读 · 机制、证据与边界</summary>
+      <div className="deepDiveBody">
+        {rows.map(([label, claim]) => <section key={label} className="analysisSection">
+          <h3>{label}</h3><p>{claim.text} {citations(claim)}</p>
+        </section>)}
+        <section className="analysisSection">
+          <h3>关键代码</h3>
+          <pre><code>{analysis.walkthrough.excerpt}</code></pre>
+          <p>{analysis.walkthrough.explanation} {citations({text: "", evidenceIds: [analysis.walkthrough.evidenceId]})}</p>
+        </section>
+        <div className="analysisCoverage">
+          <p>已读 {analysis.coverage.filesReviewed}/{analysis.coverage.filesTotal} 个文件 · 代码版本 {analysis.headSha.slice(0, 8)}</p>
+          {analysis.coverage.notes.map(note => <p key={note}>{note}</p>)}
+          <button className="evidenceToggle" onClick={() => setShowEvidence(!showEvidence)} aria-expanded={showEvidence}>证据目录 {showEvidence ? "−" : "+"}</button>
+          {showEvidence && <ul>{analysis.evidence.map(source => <li key={source.id}><a href={source.url} target="_blank" rel="noreferrer">[{source.id}] {source.label}</a></li>)}</ul>}
+        </div>
+      </div>
+    </details>
+  </div>;
+}
+
 function PrCard({
   pr,
   onPatch,
@@ -446,20 +484,6 @@ function PrCard({
   pr: DisplayPullRequest;
   onPatch: (id: number, patch: Partial<PullRequestRecord>) => void;
 }) {
-  const evaluation = pr.evaluation ?? {
-    motivation: "未提及",
-    previousBehavior: "未提及",
-    newBehavior: "未提及",
-    rationale: "未提及",
-    experiments: "未提及",
-  };
-  const reviewRows = [
-    ["动机", evaluation.motivation],
-    ["之前", evaluation.previousBehavior],
-    ["之后", evaluation.newBehavior],
-    ["合理性", evaluation.rationale],
-    ["实验/效果", evaluation.experiments],
-  ];
 
   return (
     <article
@@ -481,31 +505,9 @@ function PrCard({
         <span>{statText(pr)}</span>
       </div>
 
-      <div className="importanceNote">
-        <span>{pr.importanceLabel}</span>
-        <p>{pr.importanceReason}</p>
-      </div>
-
-      {pr.highlightReason && (
-        <div className="pickRibbon">
-          <span>{Math.round(pr.highlightScore ?? 0)}</span>
-          <p>{pr.highlightReason}</p>
-        </div>
+      {pr.deepDive ? <DeepDiveView analysis={pr.deepDive} /> : (
+        <p className="analysisPending">尚未完成代码分析</p>
       )}
-
-      <p className="comment">{pr.learningComment}</p>
-
-      <details className="reviewDisclosure">
-        <summary>PR 解读</summary>
-        <div className="reviewGrid">
-          {reviewRows.map(([label, value], index) => (
-            <section className={`reviewRow review-${index}`} key={label}>
-              <span>{label}</span>
-              <p>{value || "未提及"}</p>
-            </section>
-          ))}
-        </div>
-      </details>
 
       {pr.labels.length > 0 && (
         <div className="labels">
@@ -576,6 +578,9 @@ function filterPullRequests(
       pr.categoryLabel,
       ...(pr.labels ?? []),
       pr.learningComment,
+      pr.deepDive?.summary.text,
+      pr.deepDive?.after.text,
+      pr.deepDive?.walkthrough.explanation,
       pr.evaluation?.motivation,
       pr.evaluation?.previousBehavior,
       pr.evaluation?.newBehavior,

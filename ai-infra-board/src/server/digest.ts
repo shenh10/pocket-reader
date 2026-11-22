@@ -1,7 +1,6 @@
 import { FetchDigestResponse, FetchRangeResponse } from "../shared/types";
 import { DEFAULT_REPOSITORIES } from "./config";
 import {
-  backfillPullRequestEvaluations,
   getTopPullRequestsForDate,
   listRepositories,
   latestSuccessfulSnapshotDate,
@@ -16,10 +15,7 @@ import { notifyDigestReady } from "./notifications";
 export async function bootstrapDatabase(): Promise<void> {
   await runMigrations();
   await seedRepositories(DEFAULT_REPOSITORIES);
-  const backfilled = await backfillPullRequestEvaluations();
-  if (backfilled > 0) {
-    console.log(`[db] backfilled structured evaluations for ${backfilled} PRs`);
-  }
+
 }
 
 export async function runDailyDigest(options: {

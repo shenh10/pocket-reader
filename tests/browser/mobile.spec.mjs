@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { date, day, summary, snapshot } from "./fixtures.mjs";
+import { date, day, summary, snapshot, pr } from "./fixtures.mjs";
 const base = "/pocket-reader/";
 async function noOverflow(page) {
   const layout = await page.evaluate(() => ({
@@ -34,6 +34,32 @@ async function dataRoutes(page) {
     });
   });
 }
+test("code analysis renders cited prose and diff on a phone; legacy boilerplate stays hidden", async ({ page }) => {
+  await dataRoutes(page);
+  const claim = { text: "索引必须在乘法之前提升到 int64_t，否则乘法已经发生回绕，之后再扩大结果类型也无法恢复高位。", evidenceIds: ["D1"] };
+  const analysis = {
+    version: 1, generatedAt: "2026-11-21T00:00:00Z", generator: "fixture", headSha: "a".repeat(40), baseSha: "b".repeat(40),
+    summary: claim, problem: claim, before: claim, after: claim, tradeoff: claim, validation: claim,
+    walkthrough: { evidenceId: "D1", excerpt: "const int64_t row = blockIdx.x;\noutput[row * hidden_size] = value;\n// <img src=x onerror=alert(1)>", explanation: claim.text },
+    evidence: [{ id: "D1", kind: "diff", label: "kernel.cu", url: pr.url + "/files" }],
+    coverage: { filesTotal: 3, filesReviewed: 2, notes: ["未运行上游 GPU 测试。"] },
+  };
+  await page.route("**/pocket-reader/v1/dashboard?*", route => route.fulfill({ json: {
+    ...day, prs: [{...pr, deepDive: analysis}, {...pr, id: 101, deepDive: null, importanceReason: "命中关键词", learningComment: "阅读建议：先看测试"}]
+  }}));
+  await page.goto(base + "ai-infra-board/?date=" + date);
+  await expect(page.locator(".analysisSummary")).toContainText("int64_t");
+  await expect(page.getByText("尚未完成代码分析", {exact: true})).toBeVisible();
+  await expect(page.getByText("命中关键词", {exact: true})).toHaveCount(0);
+  await expect(page.getByText("阅读建议：先看测试", {exact: true})).toHaveCount(0);
+  await page.getByText("代码深读 · 机制、证据与边界", {exact: true}).click();
+  await expect(page.locator(".analysisSection pre")).toContainText("<img src=x");
+  await expect(page.locator(".analysisSection pre img")).toHaveCount(0);
+  await expect(page.locator(".analysisCitations a").first()).toHaveAttribute("href", pr.url + "/files");
+  await expect(page.locator(".analysisCoverage")).toContainText("已读 2/3 个文件");
+  await noOverflow(page);
+  await page.screenshot({path: "test-results/mobile-code-analysis.png", fullPage: true});
+});
 test("phone navigation, reading size and safe notification routing", async ({
   page,
 }) => {
