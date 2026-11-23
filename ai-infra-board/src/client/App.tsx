@@ -1,3 +1,4 @@
+import { dailyLearningPicks } from "../shared/curation";
 import { readService } from "../../../shared/service-client.js";
 import {
   readContent,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  AnalysisProgress,
   AnalysisClaim,
   DeepDive,
   AnnualHighlightRecord,
@@ -61,7 +63,7 @@ const laneCopy: Record<ImportanceLevel, { title: string; caption: string }> = {
 };
 
 type ViewMode = "all" | "unread" | "favorites" | "watch";
-type SurfaceMode = "board" | "timeline" | "picks";
+type SurfaceMode = "daily" | "board" | "timeline" | "picks";
 type DisplayPullRequest = PullRequestRecord &
   Partial<Pick<AnnualHighlightRecord, "highlightReason" | "highlightScore">>;
 type LocalPrState = Partial<
@@ -680,9 +682,10 @@ export function App() {
   const [serviceInfo, setServiceInfo] = useState<{
     latestDate: string;
     totalPrs: number;
+    analysis?: AnalysisProgress;
   } | null>(null);
   const [staticInfo, setStaticInfo] = useState<StaticDataset | null>(null);
-  const [surface, setSurface] = useState<SurfaceMode>("board");
+  const [surface, setSurface] = useState<SurfaceMode>("daily");
   const [timelineStart, setTimelineStart] = useState(sixMonthsAgoLocal);
   const [timelineEnd, setTimelineEnd] = useState(todayLocal);
   const [highlightYear, setHighlightYear] = useState(() =>
@@ -816,14 +819,16 @@ export function App() {
     () => filterPullRequests(highlights?.prs ?? [], query, mode, category),
     [highlights, mode, category, query],
   );
+  const learningPicks = useMemo(() => dailyLearningPicks(dashboard?.prs ?? []), [dashboard]);
+  const learningFiltered = useMemo(() => filterPullRequests(learningPicks, query, mode, category), [learningPicks, query, mode, category]);
   const activePrs =
-    surface === "timeline"
+    surface === "daily" ? learningPicks : surface === "timeline"
       ? (timeline?.prs ?? [])
       : surface === "picks"
         ? (highlights?.prs ?? [])
         : (dashboard?.prs ?? []);
   const activeFiltered =
-    surface === "timeline"
+    surface === "daily" ? learningFiltered : surface === "timeline"
       ? timelineFiltered
       : surface === "picks"
         ? highlightsFiltered
@@ -1051,8 +1056,7 @@ export function App() {
           数据截至 {staticInfo.defaultDate} · 导出于{" "}
           {formatTime(staticInfo.generatedAt)} ·{" "}
           {staticInfo.timeline.stats.total.toLocaleString()}{" "}
-          条归档。解读为规则提取，基于 PR 正文和最多前 30 个文件摘要，未审阅完整
-          diff；完整证据请查看原 PR。
+          条归档。分析基于 PR diff 与源码；每篇附实际覆盖范围和证据。
           {staticInfo.defaultDate < todayLocal() &&
             " 当前为历史快照，等待后台更新。"}
         </div>
@@ -1094,7 +1098,8 @@ export function App() {
 
       <section className="viewTabs">
         {[
-          ["board", "看板"],
+          ["daily", "今日深读"],
+          ["board", "全部归档"],
           ["timeline", "时间线"],
           ["picks", "年度精选"],
         ].map(([value, label]) => (
@@ -1193,6 +1198,24 @@ export function App() {
       {error && <div className="toast error">{error}</div>}
       {notice && <div className="toast">{notice}</div>}
       {loading && <div className="loadingLine">加载看板中...</div>}
+
+      {surface === "daily" && (
+        <section className="dailyLearning">
+          <header className="learningHeading">
+            <h2>今天值得学透的 {learningPicks.length} 个改动</h2>
+            <p>每天最多 3 篇，聚焦架构与性能机制。同一主题合并筛选，未达标准就留空。</p>
+            <p>{dashboard?.prs.length ?? 0} 条归档 · {dashboard?.prs.filter(pr => !!pr.deepDive?.focus).length ?? 0} 条已完成深读评估</p>
+          </header>
+          <div className="learningStack">
+            {learningFiltered.map(pr => <PrCard key={pr.id} pr={pr} onPatch={patchPr} />)}
+            {!learningFiltered.length && <div className="emptyWide"><span>{loading ? "正在加载…" : learningPicks.length ? "没有符合当前筛选的深读" : "本期暂无已确认的深读重点；全部 PR 仍可在归档中查看。"}</span></div>}
+          </div>
+        </section>
+      )}
+      {serviceInfo?.analysis && <details className="archiveProgress">
+        <summary>全量分析进度：{serviceInfo.analysis.completed.toLocaleString()} / {serviceInfo.analysis.total.toLocaleString()}</summary>
+        <p>待处理 {serviceInfo.analysis.pending.toLocaleString()} · 处理中 {serviceInfo.analysis.processing} · 待重试 {serviceInfo.analysis.retrying} · 需复核 {serviceInfo.analysis.needsReview}</p>
+      </details>}
 
       {surface === "board" && (
         <section className="board">

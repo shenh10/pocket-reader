@@ -99,3 +99,11 @@ test("database failures never return credential-bearing error text", async () =>
   assert.equal(res.status, 503);
   assert.doesNotMatch(await res.text(), /postgres|secret/);
 });
+test("archive progress exposes counts alongside the summary, without worker leases", async () => {
+  const progress={total:100,completed:7,pending:80,processing:5,retrying:6,needsReview:2,lastPublishedAt:"2026-11-22T00:00:00Z"};
+  const reader=createReaderHandler({...store,analysisProgress:async()=>progress});
+  const endpoint=await reader(new Request("https://reader.example/v1/analysis-progress"));
+  assert.deepEqual(await endpoint.json(),progress);
+  const summary=await reader(new Request("https://reader.example/v1/summary"));
+  assert.deepEqual((await summary.json()).analysis,progress);
+});

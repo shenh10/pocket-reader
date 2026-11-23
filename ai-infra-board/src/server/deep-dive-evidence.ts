@@ -38,8 +38,10 @@ export async function fetchEvidence(repo: string, number: number): Promise<Evide
     coverage: { filesTotal: files.length, filesReviewed: 0, notes: [] }
   };
   if (pr.body?.length > 18000) packet.coverage.notes.push("PR 正文仅读取前 18000 字符。");
-  const candidates = files.filter(file => codeFile(file) && file.patch)
-    .sort((a, b) => b.changes - a.changes);
+  // Every archive item is eligible, including documentation, CI and dependencies.
+  // Prefer executable changes, then fall back to the actual textual maintenance diff.
+  const candidates = files.filter(file => file.patch)
+    .sort((a, b) => Number(codeFile(b)) - Number(codeFile(a)) || b.changes - a.changes);
   // Preserve at least one regression-test diff even when production changes dominate.
   const test = candidates.find(file => /(^|\/)(test[s_]?|.*_test\.)/i.test(file.filename));
   const selected = [...new Set([...candidates.slice(0, 7), ...(test ? [test] : [])])];
@@ -72,7 +74,7 @@ export async function fetchEvidence(repo: string, number: number): Promise<Evide
       } catch { packet.coverage.notes.push(`${path} 的 ${side} 上下文未获取；仅依据 diff。`); }
     }
   }
-  if (!packet.coverage.filesReviewed) throw new Error("No code diff available; refusing template analysis");
+  if (!packet.coverage.filesReviewed) throw new Error("No textual diff available; requires manual source review");
   if (packet.coverage.filesReviewed < files.length) packet.coverage.notes.push(`只分析了 ${packet.coverage.filesReviewed}/${files.length} 个文件的可用代码 diff；其余未审阅。`);
   packet.coverage.notes.push("未在本地执行上游测试或 benchmark；实验结论需区分作者报告与代码推论。");
   return packet;

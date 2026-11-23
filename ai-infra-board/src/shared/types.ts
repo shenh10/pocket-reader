@@ -48,6 +48,14 @@ export interface DeepDive {
   version: 1;
   generatedAt: string;
   generator: string;
+  focus?: {
+    architecture: number;
+    performance: number;
+    learning: number;
+    evidence: number;
+    kind: "mechanism" | "local-fix" | "maintenance";
+    topic: string;
+  };
   headSha: string;
   baseSha: string;
   summary: AnalysisClaim;
@@ -59,6 +67,16 @@ export interface DeepDive {
   walkthrough: { evidenceId: string; excerpt: string; explanation: string };
   evidence: AnalysisEvidence[];
   coverage: { filesTotal: number; filesReviewed: number; notes: string[] };
+}
+
+export interface AnalysisProgress {
+  total: number;
+  completed: number;
+  pending: number;
+  processing: number;
+  retrying: number;
+  needsReview: number;
+  lastPublishedAt: string | null;
 }
 
 export interface PullRequestRecord {

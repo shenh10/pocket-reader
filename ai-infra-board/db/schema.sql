@@ -81,3 +81,22 @@ CREATE TABLE IF NOT EXISTS pr_user_state (
 
 -- Collector upserts deliberately leave independent, evidence-backed analyses intact.
 ALTER TABLE pull_requests ADD COLUMN IF NOT EXISTS deep_dive JSONB;
+
+CREATE TABLE IF NOT EXISTS analysis_jobs (
+  pr_id BIGINT PRIMARY KEY REFERENCES pull_requests(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','processing','retry','needs_review','done')),
+  attempts INTEGER NOT NULL DEFAULT 0,
+  lease_token UUID,
+  leased_until TIMESTAMPTZ,
+  retry_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_error TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_analysis_jobs_queue ON analysis_jobs(status, retry_at);
+-- Operational leases and diagnostics are only available to the collector role.
+ALTER TABLE analysis_jobs ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON analysis_jobs FROM PUBLIC;
+DO $$ BEGIN
+  IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'anon') THEN REVOKE ALL ON analysis_jobs FROM anon; END IF;
+  IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'authenticated') THEN REVOKE ALL ON analysis_jobs FROM authenticated; END IF;
+END $$;

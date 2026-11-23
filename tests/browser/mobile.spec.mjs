@@ -34,6 +34,27 @@ async function dataRoutes(page) {
     });
   });
 }
+test("daily reading defaults to a short reviewed list, while the entire archive remains accessible", async ({page}) => {
+  await dataRoutes(page);
+  const claim={text:"共享专家的输出跨 stream 使用，回收前必须等待消费者完成。",evidenceIds:["D1"]};
+  const analysis={version:1,generatedAt:"2026-11-22T00:00:00Z",generator:"gpt-6.1-sol",headSha:"a".repeat(40),baseSha:"b".repeat(40),
+    summary:claim,problem:claim,before:claim,after:claim,tradeoff:claim,validation:claim,
+    walkthrough:{evidenceId:"D1",excerpt:"stream.wait_stream(current_stream)",explanation:claim.text},
+    evidence:[{id:"D1",kind:"diff",label:"model.py",url:pr.url+"/files"}],coverage:{filesTotal:1,filesReviewed:1,notes:[]}};
+  const prs=Array.from({length:8},(_,i)=>({...pr,id:100+i,title:`Change ${i}`,deepDive:i===7?null:{...analysis,focus:{architecture:4,performance:4,learning:4,evidence:4,kind:i===6?"maintenance":"mechanism",topic:i<2?"stream-lifetime":`topic-${i}`}}}));
+  await page.route("**/pocket-reader/v1/dashboard?*",route=>route.fulfill({json:{...day,prs}}));
+  await page.goto(base+"ai-infra-board/?date="+date);
+  await expect(page.locator(".dailyLearning .prCard")).toHaveCount(3);
+  await expect(page.getByRole("button",{name:"今日深读",exact:true})).toHaveClass(/selected/);
+  await noOverflow(page);
+  await page.screenshot({path:"test-results/mobile-daily-curation.png",fullPage:true});
+  await page.getByRole("button",{name:"全部归档",exact:true}).click();
+  await expect(page.locator(".prCard")).toHaveCount(8);
+  await page.route("**/pocket-reader/v1/dashboard?*",route=>route.fulfill({json:{...day,prs:[{...pr,deepDive:null}]}}));
+  await page.reload();
+  await expect(page.locator(".dailyLearning .prCard")).toHaveCount(0);
+  await expect(page.getByText("本期暂无已确认的深读重点；全部 PR 仍可在归档中查看。",{exact:true})).toBeVisible();
+});
 test("code analysis renders cited prose and diff on a phone; legacy boilerplate stays hidden", async ({ page }) => {
   await dataRoutes(page);
   const claim = { text: "索引必须在乘法之前提升到 int64_t，否则乘法已经发生回绕，之后再扩大结果类型也无法恢复高位。", evidenceIds: ["D1"] };
@@ -48,6 +69,7 @@ test("code analysis renders cited prose and diff on a phone; legacy boilerplate 
     ...day, prs: [{...pr, deepDive: analysis}, {...pr, id: 101, deepDive: null, importanceReason: "命中关键词", learningComment: "阅读建议：先看测试"}]
   }}));
   await page.goto(base + "ai-infra-board/?date=" + date);
+  await page.getByRole("button", {name:"全部归档", exact:true}).click();
   await expect(page.locator(".analysisSummary")).toContainText("int64_t");
   await expect(page.getByText("尚未完成代码分析", {exact: true})).toBeVisible();
   await expect(page.getByText("命中关键词", {exact: true})).toHaveCount(0);
@@ -109,6 +131,7 @@ test("cached daily remains readable offline with favorites preserved", async ({
 }) => {
   await dataRoutes(page);
   await page.goto(base + "ai-infra-board/?date=" + date);
+  await page.getByRole("button", {name:"全部归档", exact:true}).click();
   await expect(page.locator(".prCard").first()).toBeVisible();
   await noOverflow(page);
   await page
@@ -123,6 +146,7 @@ test("cached daily remains readable offline with favorites preserved", async ({
   await page.unroute("**/pocket-reader/v1/**");
   await page.route("**/pocket-reader/v1/**", (route) => route.abort());
   await page.reload();
+  await page.getByRole("button", {name:"全部归档", exact:true}).click();
   await expect(page.locator(".prCard").first()).toBeVisible();
   await expect(page.locator(".pr-status")).toContainText("离线缓存");
   await expect(
@@ -215,6 +239,7 @@ test("installed UI reads the deployed Supabase service", async ({ page }) => {
     fullPage: true,
   });
   await page.locator("#digest-link").click();
+  await page.getByRole("button", {name:"全部归档", exact:true}).click();
   await expect(page.locator(".prCard").first()).toBeVisible({ timeout: 20000 });
   await page.screenshot({ path: "test-results/mobile-live-daily.png" });
 });
@@ -229,6 +254,7 @@ test("Capacitor directory navigation opens the styled daily document", async ({p
   await page.locator("#digest-link").click();
   await expect(page).toHaveURL(/native\/ai-infra-board\/index\.html\?date=/);
   await expect(page).toHaveTitle("AI Infra Merge Board");
+  await page.getByRole("button", {name:"全部归档", exact:true}).click();
   await expect(page.locator(".prCard").first()).toBeVisible();
   await expect(page.locator(".topBand")).toHaveCSS("display", "grid");
   expect(await page.evaluate(() => [...document.styleSheets].some(s => s.href?.includes('/ai-infra-board/assets/') && s.cssRules.length > 0))).toBe(true);

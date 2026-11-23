@@ -4,8 +4,10 @@ import type {
   AnnualHighlightsResponse,
   SnapshotSummary,
   PullRequestRecord,
+  AnalysisProgress,
 } from "../shared/types";
 export interface ReaderStore {
+  analysisProgress?(): Promise<AnalysisProgress>;
   days(): Promise<SnapshotSummary[]>;
   dashboard(date: string): Promise<DashboardResponse>;
   timeline(
@@ -77,6 +79,7 @@ export function createReaderHandler(store: ReaderStore) {
       params = url.searchParams;
     try {
       if (route === "health") return reply({ ok: true, version: 1 });
+      if (route === "analysis-progress" && store.analysisProgress) return reply(await store.analysisProgress());
       if (route === "summary" || route === "days") {
         const days = (await store.days()).map(publicDay);
         if (route === "days") return reply(days);
@@ -86,6 +89,7 @@ export function createReaderHandler(store: ReaderStore) {
           latest: latest ?? null,
           totalDays: days.length,
           totalPrs: days.reduce((n, d) => n + d.prCount, 0),
+          ...(store.analysisProgress ? {analysis: await store.analysisProgress()} : {}),
         });
       }
       if (route === "dashboard") {

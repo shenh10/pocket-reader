@@ -3,6 +3,7 @@ import path from "node:path";
 import pg from "pg";
 const { Pool } = pg;
 import {
+  AnalysisProgress,
   DeepDive,
   AnnualHighlightRecord,
   AnnualHighlightsResponse,
@@ -65,6 +66,21 @@ export const pool = new Pool({
   max: Number(process.env.DATABASE_POOL_MAX ?? 8),
   ssl: shouldUseSsl(databaseUrl) ? { rejectUnauthorized: false } : undefined
 });
+
+export async function getAnalysisProgress(): Promise<AnalysisProgress> {
+  const {rows} = await pool.query(`WITH progress AS (
+    SELECT pr.deep_dive, j.status, j.leased_until,
+      COALESCE(pr.deep_dive->>'generator'='gpt-6.1-sol' AND pr.deep_dive->'focus' IS NOT NULL,false) complete
+    FROM pull_requests pr LEFT JOIN analysis_jobs j ON j.pr_id=pr.id
+  ) SELECT COUNT(*)::int total, COUNT(*) FILTER(WHERE complete)::int completed,
+    COUNT(*) FILTER(WHERE NOT complete AND (status IS NULL OR status IN ('pending','done') OR (status='processing' AND leased_until<now())))::int pending,
+    COUNT(*) FILTER(WHERE NOT complete AND status='processing' AND leased_until>=now())::int processing,
+    COUNT(*) FILTER(WHERE NOT complete AND status='retry')::int retrying,
+    COUNT(*) FILTER(WHERE NOT complete AND status='needs_review')::int needs_review,
+    MAX(deep_dive->>'generatedAt') FILTER(WHERE complete) last_published_at FROM progress`);
+  const r=rows[0];
+  return {total:r.total,completed:r.completed,pending:r.pending,processing:r.processing,retrying:r.retrying,needsReview:r.needs_review,lastPublishedAt:r.last_published_at};
+}
 
 export async function runMigrations(): Promise<void> {
   const schemaPath = path.resolve(process.cwd(), "db/schema.sql");
