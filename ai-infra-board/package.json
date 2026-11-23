@@ -32,8 +32,8 @@
     "push:flush": "tsx src/server/push-worker.ts",
     "db:push-setup": "supabase db query --linked --file db/push-schema.sql",
     "deep-dive": "tsx src/server/deep-dive-cli.ts",
-    "archive": "tsx src/server/archive-cli.ts",
-    "archive:prune": "tsx src/server/archive-pruning-cli.ts"
+    "archive": "node --import tsx src/server/archive-cli.ts",
+    "archive:prune": "node --import tsx src/server/archive-pruning-cli.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
