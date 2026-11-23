@@ -48,13 +48,12 @@ async function main() {
     throw new Error("Automatic deep dives need DEEP_DIVE_API_KEY / DEEP_DIVE_MODEL / DEEP_DIVE_BASE_URL; no template fallback");
   }
   const date = normalizeDateInput(arg("--date") || todayISODate());
-  const limit = Number(arg("--limit") || process.env.DEEP_DIVE_DAILY_LIMIT || 5);
-  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 20) throw new Error("Daily limit must be 1..20");
-  // Total per-day cap (not per invocation) prevents repeated catch-up from growing model spend.
+  const limit = Number(arg("--limit") || process.env.DEEP_DIVE_DAILY_LIMIT || 1000);
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000) throw new Error("Batch limit must be 1..1000");
+  // Compatibility API worker processes every category; completed records do not consume batch capacity.
   const { rows } = await pool.query(`SELECT pr.number, r.full_name, pr.deep_dive
     FROM pull_requests pr JOIN repositories r ON r.id = pr.repo_id
-    WHERE pr.snapshot_date = $1 AND pr.importance >= 4
-      AND pr.category <> 'docs-ci' AND pr.title !~* '^\\[(doc|ci|build)\\]'
+    WHERE pr.snapshot_date = $1 AND pr.deep_dive IS NULL
     ORDER BY (pr.deep_dive IS NOT NULL) DESC, pr.importance DESC, pr.merged_at DESC LIMIT $2`, [date, limit]);
   let failures = 0;
   for (const row of rows) {

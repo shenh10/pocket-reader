@@ -1175,3 +1175,12 @@ select {
 .analysisCoverage a { color: inherit; }
 .evidenceToggle { border: 0; padding: 8px 0; background: none; color: var(--ink-soft); font: inherit; cursor: pointer; }
 @media (max-width: 600px) { .deepDiveBody { padding: 0 10px 12px; } .analysisSection p { font-size: 14px; } }
+
+.dailyLearning { max-width: 920px; margin: 0 auto; }
+.learningHeading { padding: 14px 0 20px; }
+.learningHeading h2 { margin: 0 0 10px; font-size: 22px; }
+.learningHeading p { margin: 6px 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+.learningStack { display: grid; gap: 18px; }
+.archiveProgress { margin: 18px 0; font-size: 12px; line-height: 1.7; color: var(--muted); }
+.archiveProgress summary { cursor: pointer; }
+@media(max-width:600px) { .viewTabs { flex-wrap: wrap; } .viewTabs button { flex: 1 1 40%; } }

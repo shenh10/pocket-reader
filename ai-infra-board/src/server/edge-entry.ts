@@ -7,12 +7,14 @@ import {
   getTimeline,
   getAnnualHighlights,
   listSnapshots,
+  getAnalysisProgress,
 } from "./db";
 declare const Deno: {
   env: {get(name:string):string|undefined};
   serve(handler: (request: Request) => Promise<Response>): void;
 };
 const reader = createReaderHandler({
+    analysisProgress: getAnalysisProgress,
     days: () => listSnapshots(10000),
     dashboard: (date) => getDashboard(date, true),
     timeline: (start, end, limit, offset) =>

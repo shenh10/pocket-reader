@@ -23,16 +23,33 @@ walkthrough: {evidenceId: 一个 diff 或 source 材料 ID, excerpt: 从该材�
 每项引用确实支持该项的材料。summary/before/after 至少引用一项代码材料。用 validation 解释实际新增测试的断言/覆盖和未覆盖的边界；作者正文只是报告，不等于独立验证。
 不用 Markdown 标题或表格，函数名可直接写。不要生成 URL、日期或元数据；服务会从可信来源补齐。`;
 
+export const FOCUS_PROMPT = `\n额外返回 focus 对象，用于严格筛选每日最多三篇的学习清单，不用写入选理由：
+{architecture: 0..5整数, performance: 0..5整数, learning: 0..5整数, evidence: 0..5整数, kind: "mechanism"|"local-fix"|"maintenance", topic: 一个稳定小写主题标识}。
+architecture>=4 必须改变/揭示调度、资源生命周期、通信、并行、缓存或模型执行的核心契约；单个分支加 guard、类型改名、模型适配通常<=2。
+performance>=4 必须有明确瓶颈、机制性改动及可信测量或直接可证的工作量减少，不能凭标题 Perf 或大 diff 给高分。
+learning>=4 要能迁移到别的系统的具体机制/权衡；普通修复<=2，维护<=1。evidence>=3 至少真实 diff 支持关键因果，benchmark 必须核对 baseline、硬件与规模。
+kind=mechanism 才可能进入每日重点；揭示复杂并发/数值不变量的 bug 可属于 mechanism。小修 local-fix，文档/配置/CI/依赖 maintenance。
+相同机制用同一 topic，例如 cuda-stream-lifetime、kv-cache-lifecycle、split-k-attention；不要用 PR 号或仓库前缀制造不同主题。
+对文档/CI/依赖改动也分析真实 diff，解释旧新约束和使用影响，但不用虚构运行时/性能收益；简单改动允许各段简短，避免扩写凑字。`;
+
+export function validateFocus(value: unknown): NonNullable<DeepDive["focus"]> {
+  const f = value as any;
+  if (!f || !["mechanism", "local-fix", "maintenance"].includes(f.kind)
+    || ![f.architecture, f.performance, f.learning, f.evidence].every(v => Number.isInteger(v) && v >= 0 && v <= 5)
+    || typeof f.topic !== "string" || !/^[a-z][a-z0-9-]{2,70}$/.test(f.topic)) throw new Error("Missing or invalid learning assessment");
+  return { architecture: f.architecture, performance: f.performance, learning: f.learning, evidence: f.evidence, kind: f.kind, topic: f.topic };
+}
+
 const keys = ["summary", "problem", "before", "after", "tradeoff", "validation"] as const;
 
-export function validateAnalysis(value: unknown, packet: EvidencePacket, generator: string): DeepDive {
+export function validateAnalysis(value: unknown, packet: EvidencePacket, generator: string, requireFocus = false): DeepDive {
   if (!value || typeof value !== "object") throw new Error("Analysis must be an object");
   const input = value as Record<string, any>;
   const evidence = new Map(packet.evidence.map(item => [item.id, item]));
   const claims = {} as Record<typeof keys[number], AnalysisClaim>;
   for (const key of keys) {
     const claim = input[key];
-    if (!claim || typeof claim.text !== "string" || claim.text.trim().length < (key === "summary" ? 25 : 60)
+    if (!claim || typeof claim.text !== "string" || claim.text.trim().length < 20
       || claim.text.length > 3000 || !Array.isArray(claim.evidenceIds) || !claim.evidenceIds.length
       || claim.evidenceIds.some((id: unknown) => typeof id !== "string" || !evidence.has(id))) {
       throw new Error(`Missing substantive text or valid evidence: ${key}`);
@@ -56,6 +73,7 @@ export function validateAnalysis(value: unknown, packet: EvidencePacket, generat
   const referenced = new Set([...keys.flatMap(key => claims[key].evidenceIds), code.evidenceId]);
   return {
     version: 1, generatedAt: new Date().toISOString(), generator,
+    ...(requireFocus || input.focus ? { focus: validateFocus(input.focus) } : {}),
     headSha: packet.headSha, baseSha: packet.baseSha, ...claims,
     walkthrough: { evidenceId: code.evidenceId, excerpt: code.excerpt, explanation: code.explanation },
     evidence: packet.evidence.filter(item => referenced.has(item.id)).map(({ content: _, ...item }) => item),
@@ -74,12 +92,12 @@ export async function generateAnalysis(packet: EvidencePacket): Promise<DeepDive
     method: "POST", signal: AbortSignal.timeout(180000),
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({ model, response_format: { type: "json_object" },
-      messages: [{ role: "system", content: ANALYSIS_PROMPT }, { role: "user", content: JSON.stringify(packet) }] })
+      messages: [{ role: "system", content: ANALYSIS_PROMPT + FOCUS_PROMPT }, { role: "user", content: JSON.stringify(packet) }] })
   });
   // Do not echo upstream errors: some gateways include credentials or prompts in them.
   if (!response.ok) throw new Error(`Analysis provider HTTP ${response.status}`);
   const payload = await response.json() as any;
   const content = payload.choices?.[0]?.message?.content;
   if (typeof content !== "string" || content.length > 50000) throw new Error("Invalid model response");
-  return validateAnalysis(JSON.parse(content), packet, model);
+  return validateAnalysis(JSON.parse(content), packet, model, true);
 }

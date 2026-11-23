@@ -15,7 +15,6 @@ import { notifyDigestReady } from "./notifications";
 export async function bootstrapDatabase(): Promise<void> {
   await runMigrations();
   await seedRepositories(DEFAULT_REPOSITORIES);
-
 }
 
 export async function runDailyDigest(options: {
