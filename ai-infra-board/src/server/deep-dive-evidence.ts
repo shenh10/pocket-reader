@@ -7,6 +7,26 @@ const encodePath = (path: string) => path.split("/").map(encodeURIComponent).joi
 const codeFile = (file: ChangedFile) => !/(^|\/)(vendor|node_modules|dist)\//.test(file.filename)
   && !/(\.lock|lock\.json|\.md|\.rst|\.svg|\.ipynb|\.csv)$/i.test(file.filename);
 
+export function selectEvidenceDiffs(files: ChangedFile[]): Array<{file: ChangedFile; patch: string}> {
+  const candidates = files.filter(file => file.patch)
+    .sort((a, b) => Number(codeFile(b)) - Number(codeFile(a))
+      || Number(a.status === "removed") - Number(b.status === "removed")
+      || b.changes - a.changes);
+  const test = candidates.find(file => /(^|\/)(test[s_]?|.*_test\.)/i.test(file.filename));
+  const selected = [...new Set([...candidates.slice(0, 7), ...(test ? [test] : [])])];
+  // Reserve every selected diff's share, including a small regression test after
+  // several large runtime changes. Deleted copies must not hide the current code.
+  const limit = selected.length ? Math.min(12000, Math.floor(60000 / selected.length)) : 0;
+  return selected.map(file => {
+    const patch = file.patch!;
+    if (patch.length <= limit) return {file, patch};
+    const marker = "\n\n[truncated middle of diff]\n\n";
+    const retained = limit - marker.length;
+    const head = Math.ceil(retained * 0.75);
+    return {file, patch: patch.slice(0, head) + marker + patch.slice(-(retained - head))};
+  });
+}
+
 export async function fetchEvidence(repo: string, number: number): Promise<EvidencePacket> {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo) || !Number.isSafeInteger(number) || number < 1) throw new Error("Invalid PR identity");
   let token = process.env.GITHUB_TOKEN;
@@ -40,16 +60,9 @@ export async function fetchEvidence(repo: string, number: number): Promise<Evide
   if (pr.body?.length > 18000) packet.coverage.notes.push("PR 正文仅读取前 18000 字符。");
   // Every archive item is eligible, including documentation, CI and dependencies.
   // Prefer executable changes, then fall back to the actual textual maintenance diff.
-  const candidates = files.filter(file => file.patch)
-    .sort((a, b) => Number(codeFile(b)) - Number(codeFile(a)) || b.changes - a.changes);
-  // Preserve at least one regression-test diff even when production changes dominate.
-  const test = candidates.find(file => /(^|\/)(test[s_]?|.*_test\.)/i.test(file.filename));
-  const selected = [...new Set([...candidates.slice(0, 7), ...(test ? [test] : [])])];
-  let budget = 60000;
-  for (const [index, file] of selected.entries()) {
-    const patch = file.patch!.slice(0, Math.min(12000, budget));
+  const selected = selectEvidenceDiffs(files);
+  for (const [index, {file, patch}] of selected.entries()) {
     if (!patch) continue;
-    budget -= patch.length;
     const id = `D${index + 1}`;
     packet.evidence.push({ id, kind: "diff", label: file.filename,
       url: `https://github.com/${repo}/pull/${number}/files#diff-${createHash("sha256").update(file.filename).digest("hex")}`, content: patch });
