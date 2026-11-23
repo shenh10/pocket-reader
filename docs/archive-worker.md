@@ -1,6 +1,25 @@
-# 全历史分析工作单
+# 精选历史分析工作单
 
-用户要求所有历史 PR 都生成有证据的分析，生成与学习评估模型固定为 `gpt-6.1-sol`。使用 Codex 自身执行，不调用外部模型 API。每日默认页面只展示最多 3 篇有迁移学习价值的架构/性能机制，允许不足 3 篇。全量归档不按评级、仓库或类别排除。
+用户最新要求先删掉缺乏重要性和学习价值的历史条目，只对保留候选继续深读。生成与学习评估模型固定为 `gpt-6.1-sol`。使用 Codex 自身执行，不调用外部模型 API。每日默认页面只展示最多 3 篇有迁移学习价值的架构/性能机制，允许不足 3 篇。
+
+## 先筛选，再生成
+
+`src/server/archive-selection.ts` 是入库与历史清理共同使用的初筛规则。它只看标题与完整文件清单来识别核心机制候选，不能充当代码级学习评估；旧 importance 星级不参与初筛。维护文件、CI/文档/配方、纯清理、普通模型适配及缺乏明确机制信号的条目可移出活跃库；缺失或不完整的文件信息应保留复核。收藏、稍后读、有用户笔记及已经完成的30篇分析保留。
+
+清理命令先生成可检查的固定 plan，再核对当前数据库并执行：
+
+```sh
+node ../../with-reader-db.mjs node --import tsx src/server/archive-pruning-cli.ts plan --dir ../../archive-pruning/唯一目录
+node ../../with-reader-db.mjs node --import tsx src/server/archive-pruning-cli.ts apply --dir ../../archive-pruning/唯一目录
+```
+
+完整 PR、用户状态与队列记录先写入私有 `reader_archive_pruned`，与删除在同一事务提交。数据库触发器阻止旧 collector 将清理项再次导入。恢复时提供 plan 中的明确 PR 数据库 ID：
+
+```sh
+node ../../with-reader-db.mjs node --import tsx src/server/archive-pruning-cli.ts restore --dir ../../archive-pruning/原目录 --ids ID[,ID...]
+```
+
+不要把可恢复备份重新排入生成队列。保留候选仍需读代码证明机制价值，不要为完成预筛目标伪造 focus 或声称全量代码已审阅。
 
 ## 本机环境
 

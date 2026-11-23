@@ -20,6 +20,7 @@ import { CATEGORY_LABELS, IMPORTANCE_LABELS, splitFullName } from "./config";
 import { recentHalfYearRange, toDateOnly, toISO, todayISODate } from "./date";
 import { FetchedPullRequest } from "./github";
 import { analyzePullRequest, PullRequestFileSummary } from "./intelligence";
+import { selectArchiveCandidate } from "./archive-selection";
 
 const databaseUrl =
   process.env.DATABASE_URL || "postgres://aiinfra:aiinfra@localhost:54329/ai_infra_board";
@@ -184,7 +185,12 @@ export async function saveFetchedPullRequests(
     );
 
     // Batch inserts keep multi-month backfills from requiring two DB round trips per PR.
-    const records = pullRequests.filter(pr => repositories.some(repo => repo.fullName === pr.repoFullName));
+    // Preserve existing items (and their personal state/analyses); triage new intake.
+    const existing = await client.query(`SELECT r.full_name,pr.number FROM pull_requests pr JOIN repositories r ON r.id=pr.repo_id`);
+    const existingKeys = new Set(existing.rows.map(r=>`${r.full_name}#${r.number}`));
+    const records = pullRequests.filter(pr => repositories.some(repo => repo.fullName === pr.repoFullName)
+      && (existingKeys.has(`${pr.repoFullName}#${pr.number}`)
+        || selectArchiveCandidate(pr).keep));
     for (let offset = 0; offset < records.length; offset += 100) {
       const values: unknown[] = [];
       const placeholders = records.slice(offset, offset + 100).map((pr, index) => {
