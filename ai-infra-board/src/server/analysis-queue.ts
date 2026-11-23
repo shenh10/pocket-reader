@@ -36,6 +36,9 @@ export async function finishAnalysisJob(job: AnalysisJob, analysis: DeepDive): P
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    // A disconnected publisher must not leave its lease/content locks held indefinitely.
+    await client.query("SET LOCAL idle_in_transaction_session_timeout='60s'");
+    await client.query("SET LOCAL statement_timeout='60s'");
     const lock = await client.query(`SELECT pr_id FROM analysis_jobs WHERE pr_id=$1 AND lease_token=$2
       AND status='processing' AND leased_until > now() FOR UPDATE`, [job.prId, job.leaseToken]);
     if (!lock.rowCount) throw new Error("Analysis lease expired or was replaced; refusing stale write");
