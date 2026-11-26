@@ -1,9 +1,10 @@
 /** Cheap intake triage, never an evidence-backed learning assessment. */
-export const ARCHIVE_SELECTION_VERSION = "mechanisms-v1";
+export const ARCHIVE_SELECTION_VERSION = "mechanisms-and-tutorials-v2";
 
 export interface ArchiveCandidate {
   title: string;
-  files?: Array<{path: string}> | null;
+  body?: string | null;
+  files?: Array<{path: string; additions?: number | null}> | null;
   focus?: {
     kind: string;
     architecture: number;
@@ -31,11 +32,27 @@ const adapter = /\[(?:model|models)\]|\b(?:add|support|enable|fix|load)\b.*\b(?:
 const domain = /\b(?:mla|dsa|sdsa|kda|gdn|ssm|kv|hicache|kpool|mamba|nccl|deepep|allocator|vmm|tensorcast|moe|expert|speculative|dflash\w*|dspark|eagle\w*|tp\d*|ep\d*|dcp|cp|pd|p2p|cuda|triton|gemm|fp8|fp4|mxfp8|mxfp4|nvfp4|quantiz\w*|attn|attention|cache|nixl|mooncake|engram|cudnn|rdma|router|schedul\w*|compil\w*|jit|autotun\w*|kernel\w*|sampling|grammar|logits?)\b/i;
 const technicalChange = /\b(?:metadata|stride|buffers?|cache|state|stream|layout|loop bounds|overflow|retract\w*|prefill|decode|dispatch\w*|sync\w*|pool\w*|host|index\w*|row\w*|specializ\w*|tiles?|protocol|lifecycle|fence|compress\w*|stor\w*|offload\w*|memory|deadlock|race|verif\w*|shard\w*|fusi\w*|fuse\w*|parallel\w*|communicat\w*|restripe|batch\w*|capacity|allocator|allocation|rout\w*|invocation|async\w*)\b/i;
 
+// These signals defer a decision to content review; they do not certify a tutorial.
+const tutorialTitle = /\b(?:tutorial|walkthrough|deep[- ]dive|architecture (?:guide|overview)|design (?:doc(?:ument)?|draft)|(?:explain|explaining) (?:how|why))\b/i;
+const explanatoryPath = /(^|\/)(?:tutorials?|design|design_docs?)(\/|$)|(^|\/)architecture\.(?:md|mdx|rst)$|^docs\/(?:docs\/)?(?:advanced_features|features|training)\//i;
+const cosmeticTitle = /\b(?:typos?|spelling|broken links?|formatting|math rendering|navigation)\b/i;
+function needsTutorialReview(pr: ArchiveCandidate): boolean {
+  if (cosmeticTitle.test(pr.title)) return false;
+  if (tutorialTitle.test(pr.title)) return true;
+  if (pr.files?.some(f => explanatoryPath.test(f.path) && (f.additions ?? 0) >= 32)) return true;
+  const prose = (pr.body ?? "").replace(/```[\s\S]*?```/g, "")
+    .split("\n").filter(line => !/^\s*(?:\||<!--|[-*]\s*\[[ x]\])/i.test(line)).join("\n");
+  const explanations = prose.match(/^#{1,6}\s+(?:how (?:it|this) works|architecture|algorithm|design(?: rationale)?|trade[- ]?offs?|worked example)\b/gim);
+  return prose.length >= 800 && (explanations?.length ?? 0) >= 2;
+}
+
 export function selectArchiveCandidate(pr: ArchiveCandidate): ArchiveSelection {
   if (pr.favorite || pr.watch_later || pr.note?.trim()) return {keep:true,reason:"user-saved"};
   if (pr.completed) return {keep:true,reason:"existing-completed-analysis"};
   if (pr.focus) {
     const f=pr.focus;
+    if (f.kind === "tutorial" && f.learning >= 4 && f.evidence >= 3)
+      return {keep:true,reason:"evidence-reviewed-tutorial"};
     return f.kind === "mechanism" && f.learning >= 4 && f.evidence >= 3
       && Math.max(f.architecture,f.performance) >= 4
       ? {keep:true,reason:"evidence-reviewed-mechanism"}
@@ -43,6 +60,7 @@ export function selectArchiveCandidate(pr: ArchiveCandidate): ArchiveSelection {
   }
   const paths=pr.files?.map(f=>f.path) ?? [];
   const title=pr.title.replace(/[_/]/g," ");
+  if (needsTutorialReview(pr)) return {keep:true,reason:"tutorial-content-review"};
   if (paths.length && paths.length === pr.changedFiles && paths.every(path=>maintenancePath.test(path))) return {keep:false,reason:"maintenance-files-only"};
   if (maintenanceTitle.test(pr.title)) return {keep:false,reason:"maintenance-title"};
   if (/^\s*revert\b|^\s*\[revert\]/i.test(pr.title)) return {keep:false,reason:"revert-without-new-mechanism"};
