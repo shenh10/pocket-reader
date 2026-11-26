@@ -10,8 +10,8 @@ interface PlanItem {id:number;repo:string;number:number;title:string;keep:boolea
 async function makePlan():Promise<PlanItem[]> {
   const rows=[];
   for(let last=0;;){
-  const page=await pool.query(`SELECT pr.id,r.full_name repo,pr.number,pr.title,pr.changed_files,
-    (SELECT jsonb_agg(jsonb_build_object('path',f->>'path')) FROM jsonb_array_elements(COALESCE(pr.raw->'files','[]'::jsonb)) f) files,pr.deep_dive->'focus' focus,
+  const page=await pool.query(`SELECT pr.id,r.full_name repo,pr.number,pr.title,pr.body,pr.changed_files,
+    (SELECT jsonb_agg(jsonb_build_object('path',f->>'path','additions',f->'additions')) FROM jsonb_array_elements(COALESCE(pr.raw->'files','[]'::jsonb)) f) files,pr.deep_dive->'focus' focus,
     COALESCE(pr.deep_dive->>'generator'='gpt-6.1-sol' AND pr.deep_dive->'focus' IS NOT NULL,false) completed,
     COALESCE(s.is_favorite,false) favorite,COALESCE(s.watch_later,false) watch_later,COALESCE(s.user_note,'') note
     FROM pull_requests pr JOIN repositories r ON r.id=pr.repo_id LEFT JOIN pr_user_state s ON s.pr_id=pr.id WHERE pr.id>$1 ORDER BY pr.id LIMIT 300`,[last]);
@@ -36,7 +36,9 @@ async function main(){
   }
   const planText=await fs.readFile(path.join(dir,"plan.json"),"utf8");
   const saved=JSON.parse(planText) as {version:string;items:PlanItem[]};
-  if(saved.version!==ARCHIVE_SELECTION_VERSION)throw Error("Selection version changed; create and review a fresh plan");
+  if (![ARCHIVE_SELECTION_VERSION,"mechanisms-v1"].includes(saved.version)
+    || (command === "apply" && saved.version !== ARCHIVE_SELECTION_VERSION))
+    throw Error("Selection version changed; create and review a fresh plan");
   if(command==="apply"){
     const current=await makePlan();const currentById=new Map(current.map(p=>[p.id,p]));
     const removing=saved.items.filter(p=>!p.keep);
