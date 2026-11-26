@@ -482,9 +482,11 @@ function DeepDiveView({ analysis }: { analysis: DeepDive }) {
 function PrCard({
   pr,
   onPatch,
+  compact = false,
 }: {
   pr: DisplayPullRequest;
   onPatch: (id: number, patch: Partial<PullRequestRecord>) => void;
+  compact?: boolean;
 }) {
 
   return (
@@ -495,6 +497,7 @@ function PrCard({
         <span className="repoPill">{pr.repoDisplayName}</span>
         <span className="prNumber">#{pr.number}</span>
         <span className="categoryPill">{pr.categoryLabel}</span>
+        {compact && <span className={pr.deepDive ? "analysisStatus ready" : "analysisStatus"}>{pr.deepDive ? "已有深读" : "待深读"}</span>}
       </div>
 
       <a className="prTitle" href={pr.url} target="_blank" rel="noreferrer">
@@ -507,11 +510,11 @@ function PrCard({
         <span>{statText(pr)}</span>
       </div>
 
-      {pr.deepDive ? <DeepDiveView analysis={pr.deepDive} /> : (
-        <p className="analysisPending">尚未完成代码分析</p>
+      {pr.deepDive ? compact ? <details className="readingAnalysis"><summary>查看已有深读</summary><DeepDiveView analysis={pr.deepDive} /></details> : <DeepDiveView analysis={pr.deepDive} /> : (
+        <p className="analysisPending">{compact ? "可先阅读原 PR 与教程" : "尚未完成代码分析"}</p>
       )}
 
-      {pr.labels.length > 0 && (
+      {!compact && pr.labels.length > 0 && (
         <div className="labels">
           {pr.labels.slice(0, 4).map((label) => (
             <span key={label}>{label}</span>
@@ -821,14 +824,19 @@ export function App() {
   );
   const learningPicks = useMemo(() => dailyLearningPicks(dashboard?.prs ?? []), [dashboard]);
   const learningFiltered = useMemo(() => filterPullRequests(learningPicks, query, mode, category), [learningPicks, query, mode, category]);
+  const readingQueue = useMemo(() => {
+    const pickedIds = new Set(learningPicks.map(pr => pr.id));
+    return boardFiltered.filter(pr => !pickedIds.has(pr.id));
+  }, [boardFiltered, learningPicks]);
+  const analyzedToday = dashboard?.prs.filter(pr => !!pr.deepDive).length ?? 0;
   const activePrs =
-    surface === "daily" ? learningPicks : surface === "timeline"
+    surface === "timeline"
       ? (timeline?.prs ?? [])
       : surface === "picks"
         ? (highlights?.prs ?? [])
         : (dashboard?.prs ?? []);
   const activeFiltered =
-    surface === "daily" ? learningFiltered : surface === "timeline"
+    surface === "timeline"
       ? timelineFiltered
       : surface === "picks"
         ? highlightsFiltered
@@ -1098,7 +1106,7 @@ export function App() {
 
       <section className="viewTabs">
         {[
-          ["daily", "今日深读"],
+          ["daily", "每日阅读"],
           ["board", "全部归档"],
           ["timeline", "时间线"],
           ["picks", "年度精选"],
@@ -1202,19 +1210,25 @@ export function App() {
       {surface === "daily" && (
         <section className="dailyLearning">
           <header className="learningHeading">
-            <h2>今天值得学透的 {learningPicks.length} 个改动</h2>
-            <p>每天最多 3 篇，聚焦架构与性能机制。同一主题合并筛选，未达标准就留空。</p>
-            <p>{dashboard?.prs.length ?? 0} 条归档 · {dashboard?.prs.filter(pr => !!pr.deepDive?.focus).length ?? 0} 条已完成深读评估</p>
+            <span className="readingDateline">{date} · 阅读清单</span>
+            <h2>本期收录 {dashboard?.prs.length ?? 0} 个改动</h2>
+            <p>原 PR 与教程可直接阅读，深读完成后在这里展开。</p>
+            <div className="readingCounts"><span>已有深读 <strong>{analyzedToday}</strong></span><span>待深读 <strong>{(dashboard?.prs.length ?? 0) - analyzedToday}</strong></span></div>
           </header>
-          <div className="learningStack">
-            {learningFiltered.map(pr => <PrCard key={pr.id} pr={pr} onPatch={patchPr} />)}
-            {!learningFiltered.length && <div className="emptyWide"><span>{loading ? "正在加载…" : learningPicks.length ? "没有符合当前筛选的深读" : "本期暂无已确认的深读重点；全部 PR 仍可在归档中查看。"}</span></div>}
-          </div>
+          {!!learningFiltered.length && <section className="reviewedReading" aria-label="深读重点">
+            <header className="readingSectionHeading"><h3>深读重点 <span>{learningFiltered.length}</span></h3><p>每天最多 3 篇，同一主题合并筛选。</p></header>
+            <div className="learningStack">{learningFiltered.map(pr => <PrCard key={pr.id} pr={pr} onPatch={patchPr} />)}</div>
+          </section>}
+          {!!readingQueue.length && <section className="readingQueue" aria-label="本期阅读条目">
+            {!!learningFiltered.length && <header className="readingSectionHeading"><h3>更多收录 <span>{readingQueue.length}</span></h3></header>}
+            <div className="readingList">{readingQueue.map(pr => <PrCard key={pr.id} pr={pr} onPatch={patchPr} compact />)}</div>
+          </section>}
+          {!activeFiltered.length && <div className="readingEmpty">{loading ? "正在加载阅读清单…" : dashboard?.prs.length ? "没有符合当前筛选的条目，试试调整搜索或筛选。" : "这一天暂无收录，试试切换日期。"}</div>}
         </section>
       )}
       {serviceInfo?.analysis && <details className="archiveProgress">
-        <summary>全量分析进度：{serviceInfo.analysis.completed.toLocaleString()} / {serviceInfo.analysis.total.toLocaleString()}</summary>
-        <p>待处理 {serviceInfo.analysis.pending.toLocaleString()} · 处理中 {serviceInfo.analysis.processing} · 待重试 {serviceInfo.analysis.retrying} · 需复核 {serviceInfo.analysis.needsReview}</p>
+        <summary>深读覆盖：{serviceInfo.analysis.completed.toLocaleString()} / {serviceInfo.analysis.total.toLocaleString()}</summary>
+        <p>尚未深读的条目也可直接阅读原 PR 与教程。</p>
       </details>}
 
       {surface === "board" && (
