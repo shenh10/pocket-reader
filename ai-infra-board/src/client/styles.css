@@ -1181,6 +1181,31 @@ select {
 .learningHeading h2 { margin: 0 0 10px; font-size: 22px; }
 .learningHeading p { margin: 6px 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .learningStack { display: grid; gap: 18px; }
+.readingDateline { color: var(--muted); font-size: 12px; letter-spacing: .06em; }
+.learningHeading .readingDateline + h2 { margin-top: 10px; }
+.readingCounts { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 18px; color: var(--muted); font-size: 13px; }
+.readingCounts strong { margin-left: 5px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.readingSectionHeading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin: 10px 0 14px; }
+.readingSectionHeading h3 { margin: 0; font-size: 15px; }
+.readingSectionHeading h3 span { margin-left: 6px; color: var(--muted); font-weight: 500; }
+.readingSectionHeading p { margin: 0; color: var(--muted); font-size: 12px; }
+.reviewedReading + .readingQueue { margin-top: 30px; }
+.readingList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.readingList .prCard { box-shadow: none; padding: 18px 20px; min-width: 0; }
+.readingList .prCard::before { display: none; }
+.readingList .cardTopline { flex-wrap: wrap; }
+.analysisStatus { margin-left: auto; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.analysisStatus.ready { color: var(--ink-soft); }
+.readingList .prTitle { font-size: 15px; line-height: 1.65; }
+.readingList .analysisPending { margin: 10px 0; font-size: 12px; }
+.readingList .cardActions { margin-top: 12px; }
+.readingAnalysis { margin-top: 12px; font-size: 12px; }
+.readingAnalysis > summary { color: var(--ink-soft); cursor: pointer; }
+.readingEmpty { padding: 28px 0; color: var(--muted); font-size: 14px; }
+@media (max-width: 700px) {
+  .readingList { grid-template-columns: minmax(0, 1fr); }
+  .readingList .prCard { padding: 16px; }
+}
 .archiveProgress { margin: 18px 0; font-size: 12px; line-height: 1.7; color: var(--muted); }
 .archiveProgress summary { cursor: pointer; }
 @media(max-width:600px) { .viewTabs { flex-wrap: wrap; } .viewTabs button { flex: 1 1 40%; } }
