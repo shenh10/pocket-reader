@@ -1,38 +1,32 @@
-# Mooncake tutorial: source and validation record
+# Mooncake official documentation digest: source and validation record
 
-- Prepared: 2026-11-27.
-- Topic: `mooncake-complete-tutorial`, version 1.
-- Original Chinese synthesis, not a verbatim documentation mirror.
-- Official documentation entry: https://kvcache-ai.github.io/Mooncake/getting_started/quick-start.html
-- Upstream main commit observed when fetching sources: `da2d74d84b67acff423d0633115fa7b3d051e8d8` (2026-11-27T12:48:29Z).
-- Crawled 142 documentation HTML pages reachable through navigation/internal links. The companion JSON is the complete discovered inventory; discovery does not imply hardware execution or a line-by-line review of every API.
-- Primary review focused on installation, C++ Store deployment and APIs, TE, SGLang/vLLM integration, isolation, HA, storage tiers, observability, benchmark methodology, and the architecture/boundaries of TENT, Store-RS, PG/EP, Conductor, Reshard and P2P Store.
+## Current revision: v2
 
-## Editorial checks
+The user requested closer fidelity to the original documentation and less independently authored explanation. Version 2 replaces the previous tutorial with a Chinese abridged translation of the official material, using the same topic ID and URL.
 
-- Kept C++ Store, Store-RS, TE P2PHANDSHAKE and P2P Store distinct.
-- Checked Python setup keyword names, return codes, BufferPool import/lifetime and batch API naming against the official API reference.
-- Made metadata-server startup and nonzero storage capacity explicit in the vLLM tutorial example.
-- Flagged current vLLM transfer_id/bootstrap requirements and the historical benchmark proxy incompatibility.
-- Distinguished leader election, opt-in OpLog recovery, and surviving payload replicas.
-- Included partial memory-replica allocation semantics; did not equate requested replica count with achieved redundancy.
-- Separated LOCAL_DISK offload, legacy DISK, NoF, experimental DFS and object-storage owner paths.
-- Explicitly labeled official benchmark environment/results and tutorial estimates; no GPU/RDMA measurement was performed here.
-- All 73 unique tutorial source URLs were present in the fetched official inventory or the pinned upstream source tree. Repository evidence links are added separately.
+- Source snapshot: `da2d74d84b67acff423d0633115fa7b3d051e8d8`, observed 2026-11-27.
+- 25 chapters, each with nearby original-document links.
+- 17 verbatim upstream fences (16 code/configuration examples and one HA sequence diagram); source paths, line numbers and hashes are recorded in `mooncake-v2-excerpts.json`.
+- Seven original figure references with explicit links. Pocket Reader currently renders external image Markdown as an alt-text placeholder, so each reference also provides an actionable link to the official image. The standalone HTML includes those original figures.
+- All nine original vLLM P/D benchmark data rows retained; only the header translated.
+- Removed the independently authored KV size derivation, hypothetical transfer estimate, custom deployment recipes and production acceptance roadmap.
+- Restored details from the original HiCache design: continuous prefix matching, prefetch trigger and timeout formula, two-thread pipeline, write policies, TP min reductions, page-first-direct layout, batch limits, overlap and MLA write-back behavior.
+- Restored Store allocator/placement details, object groups, quota semantics and the fuller HA recovery contract.
+- Clearly labeled editorial notes only for original-source inconsistencies or omitted prerequisites (metadata deployment, upsert wording, BufferPool view lifetime and StoreConnector dependencies).
+- Original code and figures are attributed to the upstream project. A copy of `LICENSE-APACHE` is retained as `Mooncake-LICENSE-APACHE.txt`.
 
-## Automated and visual checks
+## Validation
 
-- Publisher dry run validated all nine publication records and content SHA256 values.
-- Nine topic API/service-client/importer tests passed.
-- All 18 Bash fences passed `bash -n`; complete Python snippets passed AST parsing; JSON example parsed successfully.
-- The new article was tested before publication in the actual deployed Pocket Reader renderer, with only its topics API response substituted with the proposed bundle.
-- Desktop 1440x1000 and mobile 390x844: 26 chapter headings, four Mermaid SVG diagrams, seven KaTeX instances, 14 tables, zero math errors, zero page errors, no viewport-level horizontal overflow.
-- Screenshots of the mobile entry and rendered architecture diagram were inspected.
+The complete publication bundle passes the existing publisher's schema, safe-content, reference and SHA256 validation. Bash/shell fences pass syntax parsing; Python examples pass AST parsing; JSON configuration parses. Excerpt contents are extracted without edits and recorded by hash.
 
-## Scope limitations
+The proposed v2 article was checked using the actual deployed renderer with the topics response substituted by the proposed bundle: desktop 1440x1000 and mobile 390x844, 25 chapters, one upstream Mermaid SVG, 15 tables, no page errors, no math errors and no document-level horizontal overflow. Source page links were checked against the 142-page crawl inventory. Figure URLs were resolved from the actual rendered official pages, including Sphinx's `_images/` output paths.
 
-These checks validate editorial consistency, syntax, publishing format and rendering. They do not establish runtime correctness on a particular Linux/GPU/RDMA host, verify vendor-driver compatibility, or replace cluster benchmarks, HA failover tests and cold-tier recovery exercises. The tutorial states these boundaries and supplies an incremental acceptance plan.
+No Linux/GPU/RDMA deployment or benchmark was executed for this documentation translation. Performance claims remain attributed to the original measurements and their environments. The 142-page inventory records discovery, not a claim of line-by-line translation of every page.
 
-## Publication
+## Previous revision: v1
 
-Published one new topic through the existing validated importer/upsert functions in a transaction on 2026-11-27. The other eight topic rows were compared before and after and remained unchanged. Published body SHA256: `d3f549983d2a06417906472907ce426ac81de0440cdc2f6097668b77a52fc424`.
+The original independently structured Chinese tutorial was published with body SHA256 `d3f549983d2a06417906472907ce426ac81de0440cdc2f6097668b77a52fc424`. It included 26 chapters, custom examples and explanatory estimates. The user requested the source-faithful revision above; the previous text remains recoverable in Git history.
+
+## v2 publication
+
+Updated only `mooncake-complete-tutorial` to version 2; the other eight rows were unchanged. Published content SHA256: `9cb88f97e82395381f3b652e2e035498747c2295421ab4a6325966a6eb4645b5`.

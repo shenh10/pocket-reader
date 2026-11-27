@@ -1,0 +1,162 @@
+{
+  "sourceCommit": "da2d74d84b67acff423d0633115fa7b3d051e8d8",
+  "excerpts": [
+    {
+      "key": "install",
+      "source": "getting_started/quick-start.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/getting_started/quick-start.html",
+      "sourceLine": 37,
+      "language": "bash",
+      "codeSha256": "80b6c8ae4db908688bac37551a73c28d68e1520a9dc35c89af01126c7a5d9195",
+      "transformation": "Verbatim code fence; no code edits"
+    },
+    {
+      "key": "master",
+      "source": "getting_started/quick-start.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/getting_started/quick-start.html",
+      "sourceLine": 383,
+      "language": "bash",
+      "codeSha256": "a5f49871a993bbc11620d832c6f33e7b218e5755001f13c2a8b2d278e5a66e40",
+      "transformation": "Verbatim code fence; no code edits"
+    },
+    {
+      "key": "hello",
+      "source": "getting_started/quick-start.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/getting_started/quick-start.html",
+      "sourceLine": 400,
+      "language": "python",
+      "codeSha256": "b78461de9d63e627af1ebe3e2b75959f77674264c8bd64788bd518471f37afee",
+      "transformation": "Verbatim code fence; no code edits"
+    },
+    {
+      "key": "build",
+      "source": "getting_started/quick-start.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/getting_started/quick-start.html",
+      "sourceLine": 59,
+      "language": "bash",
+      "codeSha256": "a9d2ce6a96cfb377a79845f5bd8e47e19995a725c1d12aba1341aec36145942c",
+      "transformation": "Verbatim code fence; no code edits"
+    },
+    {
+      "key": "bufferpool",
+      "source": "api-reference/python/mooncake-store.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/api-reference/python/mooncake-store.html",
+      "sourceLine": 353,
+      "language": "python",
+      "codeSha256": "01c31c079fcd543dd97214c518d445999575e8ab631dd57c723dfb608fa99126",
+      "transformation": "Verbatim code fence; no code edits"
+    },
+    {
+      "key": "hicache-master",
+      "source": "deployment/integrations/sglang/hicache-quick-start.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/deployment/integrations/sglang/hicache-quick-start.html",
+      "sourceLine": 38,
+      "language": "bash",
+      "codeSha256": "1f896e31c7e68ad5d707e9c78e6c9ca0622678ba11aecd2c0dee433988d9f2d7",
+      "transformation": "Verbatim code fence; no code edits"
+    },
+    {
+      "key": "hicache-launch",
+      "source": "deployment/integrations/sglang/hicache-quick-start.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/deployment/integrations/sglang/hicache-quick-start.html",
+      "sourceLine": 44,
+      "language": "bash",
+      "codeSha256": "e8f6275dffdbd723c13e0790206c5401ee012143f02114859928f415c549221a",
+      "transformation": "Verbatim code fence; no code edits"
+    },
+    {
+      "key": "sg-pd",
+      "source": "deployment/integrations/sglang/pd-disaggregation.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/deployment/integrations/sglang/pd-disaggregation.html",
+      "sourceLine": 68,
+      "language": "bash",
+      "codeSha256": "65dfbc134b6d862e07347ee0c4f60f63156dab2acfc3564dba094c84fc0cbf36",
+      "transformation": "Verbatim code fence; no code edits"
+    },
+    {
+      "key": "vllm-prefill",
+      "source": "deployment/integrations/vllm/disagg-prefill-decode.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/deployment/integrations/vllm/disagg-prefill-decode.html",
+      "sourceLine": 53,
+      "language": "bash",
+      "codeSha256": "97f49fe85ffdfe25c3002890af124a9a8b82954f2d85d18c49299f8521c0b017",
+      "transformation": "Verbatim code fence; no code edits"
+    },
+    {
+      "key": "vllm-decode",
+      "source": "deployment/integrations/vllm/disagg-prefill-decode.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/deployment/integrations/vllm/disagg-prefill-decode.html",
+      "sourceLine": 61,
+      "language": "bash",
+      "codeSha256": "98474bc4ce1cfc4c43039f53fba0a33317378d739793e8f404bd27f56d41f950",
+      "transformation": "Verbatim code fence; no code edits"
+    },
+    {
+      "key": "vllm-proxy",
+      "source": "deployment/integrations/vllm/disagg-prefill-decode.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/deployment/integrations/vllm/disagg-prefill-decode.html",
+      "sourceLine": 69,
+      "language": "bash",
+      "codeSha256": "e0f50345868df4e26e4a0ada989024e229fe997430a4d7ac5ae0b6b8177ed5ce",
+      "transformation": "Verbatim code fence; no code edits"
+    },
+    {
+      "key": "vllm-store-master",
+      "source": "deployment/integrations/vllm/kv-cache-storage.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/deployment/integrations/vllm/kv-cache-storage.html",
+      "sourceLine": 50,
+      "language": "shell",
+      "codeSha256": "802eae215681f01cddd7bbc2e76f6c954f68f5b4bbae177b2a6905e989c6aed1",
+      "transformation": "Verbatim code fence; no code edits"
+    },
+    {
+      "key": "vllm-store-config",
+      "source": "deployment/integrations/vllm/kv-cache-storage.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/deployment/integrations/vllm/kv-cache-storage.html",
+      "sourceLine": 56,
+      "language": "json",
+      "codeSha256": "d0d884b87379caad09ae2aaeb34ba2c837db206aa564ef8847e0a54bb3d43279",
+      "transformation": "Verbatim code fence; no code edits"
+    },
+    {
+      "key": "vllm-store-launch",
+      "source": "deployment/integrations/vllm/kv-cache-storage.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/deployment/integrations/vllm/kv-cache-storage.html",
+      "sourceLine": 77,
+      "language": "shell",
+      "codeSha256": "92c202f0acb9a2900bbfd082150725b56b53680191a1d56e2e29a4e070067582",
+      "transformation": "Verbatim code fence; no code edits"
+    },
+    {
+      "key": "lmcache-yaml",
+      "source": "deployment/integrations/lmcache/vllmv1-lmcache-integration.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/deployment/integrations/lmcache/vllmv1-lmcache-integration.html",
+      "sourceLine": 69,
+      "language": "yaml",
+      "codeSha256": "cd9efa4a6709b9ae3bd549dcb071c566f33bc89187b8a52cfbc064e5c9052fce",
+      "transformation": "Verbatim code fence; no code edits"
+    },
+    {
+      "key": "ha-master",
+      "source": "deployment/mooncake-store-deployment-guide.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/deployment/mooncake-store-deployment-guide.html",
+      "sourceLine": 143,
+      "language": "bash",
+      "codeSha256": "9466768730b7551bb62adb0f0d9a77247b3b29c3fc145da20f7a6978b9fd1cfa",
+      "transformation": "Verbatim code fence; no code edits"
+    },
+    {
+      "key": "ha-sequence",
+      "source": "design/store/high-availability.md",
+      "sourceUrl": "https://kvcache-ai.github.io/Mooncake/design/store/high-availability.html",
+      "sourceLine": 65,
+      "language": "mermaid",
+      "codeSha256": "05017f390cc186cbba25a0ee362e9b6df07cbdd8523979dc7309641d6691ec0f",
+      "transformation": "Verbatim code fence; no code edits"
+    }
+  ],
+  "table": {
+    "source": "performance/vllm/vllm-v1-pd-performance.md",
+    "transformation": "Header translated; all nine original data rows retained"
+  }
+}

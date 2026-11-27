@@ -75,10 +75,12 @@
     },
     {
       "id": "mooncake-complete-tutorial",
-      "reviewedArticleHash": "d3f549983d2a06417906472907ce426ac81de0440cdc2f6097668b77a52fc424",
-      "publishedContentHash": "d3f549983d2a06417906472907ce426ac81de0440cdc2f6097668b77a52fc424",
+      "reviewedArticleHash": "9cb88f97e82395381f3b652e2e035498747c2295421ab4a6325966a6eb4645b5",
+      "publishedContentHash": "9cb88f97e82395381f3b652e2e035498747c2295421ab4a6325966a6eb4645b5",
       "changes": [
-        "Original Chinese tutorial synthesized from official Mooncake documentation; source snapshot and limitations recorded in docs/topic-evidence/mooncake-tutorial-review.md"
+        "Replaced original explanatory tutorial with source-faithful Chinese abridged translation.",
+        "Preserved 17 verbatim upstream code/diagram fences, official figures and benchmark values; added explicit editorial notes only for source prerequisites/inconsistencies.",
+        "Included upstream Apache-2.0 license and excerpt provenance."
       ]
     }
   ],
