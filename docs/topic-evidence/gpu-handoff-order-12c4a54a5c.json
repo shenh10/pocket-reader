@@ -1,0 +1,88 @@
+{
+  "kind": "bounded CPU finite-state/event model",
+  "bounds": "4 tiles; 1 ordered producer; 1 ordered consumer; 1 or 2 slots; whole-tile write/read abstract events",
+  "assumptions": [
+    "full(g) implies correct visibility for generation g (assumed, not proved)",
+    "empty(g) follows asynchronous source read completion",
+    "generation labels abstract hardware phase protocol",
+    "enabled events may be interleaved arbitrarily; no latency model"
+  ],
+  "serial": {
+    "stages": 1,
+    "tiles": 4,
+    "requireEmpty": true,
+    "states": 21,
+    "transitions": 20,
+    "terminal": 1,
+    "violationObservations": 0,
+    "activeOverwrite": null,
+    "overlap": null
+  },
+  "double": {
+    "stages": 2,
+    "tiles": 4,
+    "requireEmpty": true,
+    "states": 39,
+    "transitions": 56,
+    "terminal": 1,
+    "violationObservations": 0,
+    "activeOverwrite": null,
+    "overlap": [
+      "W0[slot0]",
+      "full0",
+      "beginRead0",
+      "W1[slot1]"
+    ]
+  },
+  "missingReverse": {
+    "stages": 2,
+    "tiles": 4,
+    "requireEmpty": false,
+    "states": 57,
+    "transitions": 88,
+    "terminal": 1,
+    "violationObservations": 15,
+    "activeOverwrite": [
+      "W0[slot0]",
+      "full0",
+      "W1[slot1]",
+      "full1",
+      "beginRead0",
+      "W2[slot0]"
+    ],
+    "overlap": [
+      "W0[slot0]",
+      "full0",
+      "beginRead0",
+      "W1[slot1]"
+    ]
+  },
+  "residencyWitness": {
+    "capacity": 2,
+    "states": 16,
+    "assumptions": [
+      "CTA residency held until completion",
+      "waiting consumers busy-wait and cannot complete before producer",
+      "no preemption/residency guarantee"
+    ],
+    "resident": [
+      "consumer0",
+      "consumer1"
+    ],
+    "queued": [
+      "producer"
+    ],
+    "done": false,
+    "trace": [
+      "admit consumer0",
+      "admit consumer1"
+    ],
+    "enabledTransitions": []
+  },
+  "limitations": [
+    "not a GPU simulator or memory-model proof",
+    "no failure probabilities",
+    "safety checked only for listed finite state bounds",
+    "reachability of completion is not universal scheduler liveness"
+  ]
+}

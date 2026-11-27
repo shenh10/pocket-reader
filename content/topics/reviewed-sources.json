@@ -1,0 +1,179 @@
+{
+  "purpose": "Reproducible reviewed content input for the server importer; excluded from web/mobile build outputs.",
+  "articles": [
+    {
+      "id": "kimi-hybrid-capabilities",
+      "reviewedArticleHash": "b4fe84daae2feab3f3f74d6b66550eb043a41cfd1d3a59e0ee089a05a340cb53",
+      "publishedContentHash": "5e06072ea792c39e80804e87575bae6f8976ea5f2f65284edaae3db33363b5d8",
+      "changes": [
+        "Public topic/evidence links",
+        "Removed obsolete local-draft publication-status sentence"
+      ]
+    },
+    {
+      "id": "deepseek-multiscale-memory",
+      "reviewedArticleHash": "17510cbbc1f97f3f90964304b1d0ead45b20ce24ad11f5c0b96da2624f18228a",
+      "publishedContentHash": "50ef0caeb48a3324f2ddbe4f09d9b45a90bcd11c65631e274245e952eb3b4e9f",
+      "changes": [
+        "Public topic/evidence links",
+        "Removed obsolete local-draft publication-status sentence"
+      ]
+    },
+    {
+      "id": "kda-state-layout",
+      "reviewedArticleHash": "49402da06507ff8ad50b2040e5a03bf75f03d47f17b5db03b71196a816adfba1",
+      "publishedContentHash": "2ed286f6ebc8db69d0aea9b71762d197899db21b09662d1e71e8fb6877a7ae53",
+      "changes": [
+        "Public topic/evidence links",
+        "Removed obsolete local-draft publication-status sentence"
+      ]
+    },
+    {
+      "id": "effective-work-domain",
+      "reviewedArticleHash": "c8ecc3d5dfdcf29bfab7329df5efd32d763ba6056e1e3b61ad9aaabc4d059eef",
+      "publishedContentHash": "22b2d7358c441c419a78a1bff8d15122b12539abe51c8cff0dd8427bb8af8c53",
+      "changes": [
+        "Public topic/evidence links",
+        "Removed obsolete local-draft publication-status sentence"
+      ]
+    },
+    {
+      "id": "gpu-handoff-order",
+      "reviewedArticleHash": "8f262f65046d8daaf9a9cb9772d857fd2bc657501bea52eba1c4be267e92d7f2",
+      "publishedContentHash": "20ad40931a6e09784f4148adf854db1fa06c883bf6bb40d96e4ee54a85fcbe25",
+      "changes": [
+        "Public topic/evidence links",
+        "Removed obsolete local-draft publication-status sentence"
+      ]
+    },
+    {
+      "id": "moe-working-set",
+      "reviewedArticleHash": "58226666bc4e5e570823f964f171cd04568bf3f6ad82352fa6dcc596ddd6ba7c",
+      "publishedContentHash": "015354669dd15aaef69df7348a2c787240d5c85b8edece64d94f72491a337727",
+      "changes": [
+        "Public topic/evidence links",
+        "Removed obsolete local-draft publication-status sentence"
+      ]
+    },
+    {
+      "id": "evaluation-invariance",
+      "reviewedArticleHash": "137c580885c7c623b1b2b0d8ecdad92a3e5579952de9049f7a9cdc1f2ede4cda",
+      "publishedContentHash": "621c7c8257c3b8a3c3378371b4e9ee0708b6c82f6b0c6e9ddc79fa6e136f49e3",
+      "changes": [
+        "Public topic/evidence links",
+        "Removed obsolete local-draft publication-status sentence"
+      ]
+    },
+    {
+      "id": "residual-mixing",
+      "reviewedArticleHash": "19689ed75c913fa2712d64563fe1145200c572fc4c6418c67b3c731138d29bb4",
+      "publishedContentHash": "848b85f18b645ee2de20c62cd164974ab4774e2144c54805bce599ab42778c5b",
+      "changes": [
+        "Public topic/evidence links",
+        "Removed obsolete local-draft publication-status sentence"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "source": "drafts/kimi-hybrid-capabilities/latent-cost-research/notes.md",
+      "file": "kimi-hybrid-capabilities-e5361c9988.md",
+      "sha256": "e08386e85b3907f64b010f87c2a249ab4b865ec8135e3edafbddfcba8b545b2f"
+    },
+    {
+      "source": "drafts/kda-state-layout/integration-evidence.md",
+      "file": "kimi-hybrid-capabilities-96fee966c8.md",
+      "sha256": "050fc0f05c070c35d9f88fea2290445ce1c1582bf569da4d443289b96ef320ce"
+    },
+    {
+      "source": "drafts/deepseek-multiscale-memory/layout-tradeoffs.md",
+      "file": "deepseek-multiscale-memory-f277697c3a.md",
+      "sha256": "dee131eca5b6d44933dc82b1752140621ac29cdc2bdd6bf3cda950c36200175b"
+    },
+    {
+      "source": "drafts/deepseek-multiscale-memory/layout-tradeoff-research/notes.md",
+      "file": "deepseek-multiscale-memory-7eabb31822.md",
+      "sha256": "6e15e07cf096875c5ce6e5e89c4ee2edd4be1a10ec2e6b569b6586c33daa36a8"
+    },
+    {
+      "source": "drafts/kda-state-layout/tradeoff-research/notes.md",
+      "file": "kda-state-layout-c62e4207a4.md",
+      "sha256": "dc5ca1d322b2d6445f18dcfa29394993a82509f79373e8d909a4b7b6e450e99e"
+    },
+    {
+      "source": "drafts/effective-work-domain/retention-research/README.md",
+      "file": "effective-work-domain-04f2b17a2f.md",
+      "sha256": "c594426e35ac1094ce4c88a190477e2064343c842de31ed17502bcd6d610de18"
+    },
+    {
+      "source": "drafts/gpu-handoff-order/protocol-research/README.md",
+      "file": "gpu-handoff-order-ab63e0eb96.md",
+      "sha256": "c0694893d76f5c8597dc53c27de42a40beeeb3a933c0588a03a74208abab66ea"
+    },
+    {
+      "source": "drafts/gpu-handoff-order/protocol-research/model-results.json",
+      "file": "gpu-handoff-order-12c4a54a5c.json",
+      "sha256": "df3676d0e0e6c5c9a398455670c9ea3f91ec37006da0f04197e711194555b726"
+    },
+    {
+      "source": "drafts/gpu-handoff-order/protocol-research/protocol-model.mjs",
+      "file": "gpu-handoff-order-070cc199fa.mjs",
+      "sha256": "555031fcf81cf5551eb173836bfcc0dacc67f97b7c30ab65dc894ac43aa74a8a"
+    },
+    {
+      "source": "source-research/moe-working-set/consumer-contract/notes.md",
+      "file": "moe-working-set-e849330ab4.md",
+      "sha256": "aff29d3b9ce3bba2ebc7c2e5dea0e063d25c1dca2116a60b25f829626cca5646"
+    },
+    {
+      "source": "source-research/moe-working-set/grouped-decode/notes.md",
+      "file": "moe-working-set-8b88af0b78.md",
+      "sha256": "08c3e4212f26e332126aa0f0ebe5c4ff03f0594cebf705b49558bea6e6b000db"
+    },
+    {
+      "source": "source-research/moe-working-set/distinct-dequant/notes.md",
+      "file": "moe-working-set-8ce7bdfbaa.md",
+      "sha256": "390527b5ef64915c26c91e1817866b45ef751ad2fd76b662947dc465ad380d65"
+    },
+    {
+      "source": "source-research/moe-working-set/cost-model/README.md",
+      "file": "moe-working-set-6ddc15f50b.md",
+      "sha256": "4d721cde482986f211c8ad5e63780d3d1b1e5a04dc8a0e648c0bc9cda28f3840"
+    },
+    {
+      "source": "source-research/evaluation-invariance/recurrent-chunks/notes.md",
+      "file": "evaluation-invariance-2fdf7386a0.md",
+      "sha256": "17cab20b3515b6576053d5d749833c4ebbcc1048382599f322a5b73316dd5ea1"
+    },
+    {
+      "source": "source-research/evaluation-invariance/attention-splits/notes.md",
+      "file": "evaluation-invariance-0ac75e543a.md",
+      "sha256": "28b572fd5bec337811d44a2bdcb1b9556bb1895511c2545f72296cfc91828db0"
+    },
+    {
+      "source": "source-research/evaluation-invariance/gemm-segments/notes.md",
+      "file": "evaluation-invariance-e92e5b874f.md",
+      "sha256": "ffd800279fa6992538565c362b5f465f02e94f185570ba4a384ad6cf85208a39"
+    },
+    {
+      "source": "source-research/evaluation-invariance/cost-model/README.md",
+      "file": "evaluation-invariance-540ef6f66f.md",
+      "sha256": "d3de5f08e07b749699257eff51660f099abe3e096b37873f29cc698f77e9b1e0"
+    },
+    {
+      "source": "source-research/residual-mixing/geometry-model/README.md",
+      "file": "residual-mixing-a9d673614a.md",
+      "sha256": "4f53aca91d6143fff8078f69f9dfd73478c468e81a2f88ae136f678e2e681cd9"
+    },
+    {
+      "source": "source-research/residual-mixing/mhc/notes.md",
+      "file": "residual-mixing-bfc1e03f6e.md",
+      "sha256": "5e51ded1f0ecf76c9e021fcba681d824fde1b0aefae4923af1eba0787e32b1a3"
+    },
+    {
+      "source": "source-research/residual-mixing/attnres/notes.md",
+      "file": "residual-mixing-ef278fb93f.md",
+      "sha256": "542bb8cfec52af8d24563c0aa055e09d19ad29ff3acb611750984a38ed6f9168"
+    }
+  ]
+}

@@ -41,3 +41,14 @@ test("untrusted notification URLs cannot leave the bundled site or inject a quer
     "https://localhost/ai-infra-board/",
   );
 });
+test("shared topics preserve article and Unicode section in web and native routes", () => {
+  for (const base of ["https://localhost/", "capacitor://localhost/", "https://example.org/pocket-reader/"])
+    for (const native of [false, true]) {
+      const target = new URL(`ai-infra-board/${native ? 'index.html' : ''}?view=topics&topic=residual-mixing#4-双随机到底保证哪个量`, base);
+      assert.equal(routeFromLink(PUBLIC_SITE + 'ai-infra-board/?view=topics&topic=residual-mixing&next=https://evil.example#4-双随机到底保证哪个量', base, native), target.href);
+      assert.equal(routeFromLink('pocketreader://daily?view=topics&topic=residual-mixing#4-双随机到底保证哪个量', base, native), target.href);
+      const malformed = new URL(routeFromLink(PUBLIC_SITE + 'ai-infra-board/?view=topics&topic=../private&redirect=evil#%3Cscript%3E', base, native));
+      assert.equal(malformed.search, '?view=topics');
+      assert.equal(malformed.hash, '');
+    }
+});

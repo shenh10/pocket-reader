@@ -21,7 +21,7 @@ export async function serviceBase() {
   return setServiceBase(base);
 }
 export async function readService(route, { onStatus = () => {} } = {}) {
-  if (!/^(summary|days|dashboard|timeline|highlights)(\?|$)/.test(route))
+  if (!/^(?:(?:summary|days|dashboard|timeline|highlights)(?:\?[^#]*)?|topics(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)?)$/.test(route))
     throw Error("不支持的日报接口");
   const url = new URL(route, await serviceBase()).href;
   // Query parameters identify different dates and timeline pages; never strip them here.
@@ -31,10 +31,25 @@ export async function readService(route, { onStatus = () => {} } = {}) {
   };
   const endpoint = route.split("?")[0];
   const validate = (value) =>
-    endpoint === "days"
+    endpoint === "topics"
+      ? value && Array.isArray(value.topics) && value.topics.every(isTopicSummary)
+      : endpoint.startsWith("topics/")
+        ? value && isTopicSummary(value.topic) && value.topic.id === endpoint.slice(7) &&
+          typeof value.topic.body === "string" && value.topic.body.length <= 2000000 &&
+          typeof value.topic.contentHash === "string" && /^[a-f0-9]{64}$/.test(value.topic.contentHash)
+        : endpoint === "days"
       ? Array.isArray(value)
       : endpoint === "summary"
         ? value && "latestDate" in value
         : value && Array.isArray(value.prs);
   return readContent(url, { cache, onStatus, validate });
+}
+
+function isTopicSummary(topic) {
+  return topic && typeof topic.id === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(topic.id) &&
+    typeof topic.title === "string" && typeof topic.description === "string" &&
+    typeof topic.category === "string" && Array.isArray(topic.tags) && topic.tags.every(tag => typeof tag === "string") &&
+    Number.isInteger(topic.version) && topic.version > 0 && typeof topic.updatedAt === "string" &&
+    Number.isFinite(topic.readingMinutes) && topic.readingMinutes > 0 &&
+    Array.isArray(topic.relatedTopicIds) && topic.relatedTopicIds.every(id => typeof id === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id));
 }
