@@ -136,10 +136,12 @@ test("phone navigation, reading size and safe notification routing", async ({
     page.getByRole("button", { name: "分享当前页面" }),
   ).toBeInViewport();
   await page.screenshot({ path: "test-results/mobile-tutorial.png" });
+  await page.waitForFunction(() => typeof window.PocketReader?.handleNotification === "function");
   await page.evaluate(() =>
     window.PocketReader.handleNotification({ date: "2026-11-20" }),
   );
   await expect(page).toHaveURL(/ai-infra-board\/\?date=2026-11-20/);
+  await page.waitForFunction(() => typeof window.PocketReader?.handleNotification === "function");
   const current = page.url();
   await page.evaluate(() =>
     window.PocketReader.handleNotification({ url: "https://evil.example/" }),

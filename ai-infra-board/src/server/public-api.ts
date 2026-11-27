@@ -6,7 +6,11 @@ import type {
   PullRequestRecord,
   AnalysisProgress,
 } from "../shared/types";
+import { topicArticle, topicIdPattern, topicSummary } from "../shared/topics";
+import type { TopicsStore } from "./topics-store";
 export interface ReaderStore {
+  topics?: TopicsStore["topics"];
+  topic?: TopicsStore["topic"];
   analysisProgress?(): Promise<AnalysisProgress>;
   days(): Promise<SnapshotSummary[]>;
   dashboard(date: string): Promise<DashboardResponse>;
@@ -79,6 +83,17 @@ export function createReaderHandler(store: ReaderStore) {
       params = url.searchParams;
     try {
       if (route === "health") return reply({ ok: true, version: 1 });
+      if (route === "topics") {
+        if (!store.topics) return reply({ error: "专题服务暂时不可用。" }, 503);
+        return reply({ topics: (await store.topics()).map(topicSummary) });
+      }
+      if (route.startsWith("topics/")) {
+        const id = route.slice("topics/".length);
+        if (!topicIdPattern.test(id)) return reply({ error: "Invalid topic id" }, 400);
+        if (!store.topic) return reply({ error: "专题服务暂时不可用。" }, 503);
+        const topic = await store.topic(id);
+        return topic ? reply({ topic: topicArticle(topic) }) : reply({ error: "Topic not found" }, 404);
+      }
       if (route === "analysis-progress" && store.analysisProgress) return reply(await store.analysisProgress());
       if (route === "summary" || route === "days") {
         const days = (await store.days()).map(publicDay);

@@ -70,6 +70,24 @@ select:focus-visible {
   text-transform: uppercase;
   color: #68786d;
 }
+.topic-shelf {
+  display: block;
+  position: relative;
+  padding: 28px 32px;
+  margin: 0 0 30px;
+  border: 1px solid #b8c7b5;
+  border-left: 4px solid #17392e;
+  background: #e9ede1;
+}
+.topic-shelf h2 { font-size: clamp(22px, 3vw, 30px); margin: 10px 0; letter-spacing: -.035em; }
+.topic-shelf p { max-width: 660px; color: #52665b; font-size: 15px; line-height: 1.8; }
+.topic-shelf > span { display: inline-flex; gap: 28px; margin-top: 8px; font-size: 14px; font-weight: 600; }
+.topic-shelf:hover { border-color: #17392e; }
+@media(max-width: 600px) { .topic-shelf { padding: 22px; } }
+@media(prefers-color-scheme: dark) {
+  .topic-shelf { background: #1c3027; border-color: #496052; color: #edf0df; }
+  .topic-shelf .eyebrow, .topic-shelf p { color: #b5c7b8; }
+}
 .welcome {
   padding: 38px 0 28px;
   display: flex;

@@ -1,3 +1,4 @@
+import { TopicLibrary } from "./TopicLibrary";
 import { dailyLearningPicks } from "../shared/curation";
 import { readService } from "../../../shared/service-client.js";
 import {
@@ -671,6 +672,22 @@ function EmptyLane() {
 }
 
 export function App() {
+  const [topicsView, setTopicsView] = useState(() => new URLSearchParams(location.search).get("view") === "topics");
+  useEffect(() => {
+    const sync = () => setTopicsView(new URLSearchParams(location.search).get("view") === "topics");
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
+  }, []);
+  function changeReaderSurface(topics: boolean) {
+    const url = new URL(location.href);
+    if (topics) url.searchParams.set("view", "topics");
+    else { url.searchParams.delete("view"); url.searchParams.delete("topic"); }
+    url.hash = "";
+    history.pushState(null, "", url);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+    window.scrollTo({ top: 0 });
+  }
+
   const [date, setDate] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("date") ?? todayLocal();
@@ -982,6 +999,15 @@ export function App() {
   }
 
   const snapshot = dashboard?.snapshot;
+  const readerNavigation = <nav className="readerSurfaceTabs" aria-label="阅读栏目">
+    <button className={!topicsView ? "selected" : ""} onClick={() => changeReaderSurface(false)}>日报</button>
+    <button className={topicsView ? "selected" : ""} onClick={() => changeReaderSurface(true)}>知识专题</button>
+  </nav>;
+  if (topicsView) return <main className="shell topicShell">
+    <section className="topBand"><div className="brandBlock"><div className="mark"><TerminalSquare size={24} /></div><div><p className="eyebrow">AI INFRA DAILY</p><h1>PR Radar</h1></div></div></section>
+    {readerNavigation}<TopicLibrary />
+  </main>;
+
 
   return (
     <main className="shell">
@@ -1052,6 +1078,8 @@ export function App() {
           )}
         </div>
       </section>
+
+      {readerNavigation}
 
       {serviceInfo && (
         <div className="toast">

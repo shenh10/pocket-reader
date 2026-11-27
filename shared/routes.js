@@ -41,7 +41,16 @@ export function routeFromLink(value, localBase, native = false) {
       route.startsWith("ai-infra-board/")
     )
       target.searchParams.set("date", date);
-    if (/^#[a-zA-Z0-9_-]+$/.test(input.hash)) target.hash = input.hash;
+    if (route.startsWith("ai-infra-board/") && input.searchParams.get("view") === "topics") {
+      target.searchParams.set("view", "topics");
+      const topic = input.searchParams.get("topic");
+      if (topic && /^[a-z][a-z0-9-]{0,79}$/.test(topic)) target.searchParams.set("topic", topic);
+    }
+    // Heading anchors include Chinese characters; decode before validating and
+    // let URL serialize the fragment again. Never carry arbitrary query fields.
+    const fragment = decodeURIComponent(input.hash.slice(1));
+    if (fragment && fragment.length <= 400 && /^[\p{L}\p{N}_-]+$/u.test(fragment))
+      target.hash = fragment;
     return target.href;
   } catch {
     return null;

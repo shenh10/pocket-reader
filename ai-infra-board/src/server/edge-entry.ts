@@ -2,18 +2,21 @@
 import { createPushHandler } from "./push-api";
 import { pushStore } from "./push-store";
 import { createReaderHandler } from "./public-api";
+import { createTopicsStore } from "./topics-store";
 import {
   getDashboard,
   getTimeline,
   getAnnualHighlights,
   listSnapshots,
   getAnalysisProgress,
+  pool,
 } from "./db";
 declare const Deno: {
   env: {get(name:string):string|undefined};
   serve(handler: (request: Request) => Promise<Response>): void;
 };
 const reader = createReaderHandler({
+    ...createTopicsStore(pool),
     analysisProgress: getAnalysisProgress,
     days: () => listSnapshots(10000),
     dashboard: (date) => getDashboard(date, true),

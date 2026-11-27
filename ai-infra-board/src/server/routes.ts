@@ -6,14 +6,53 @@ import {
   getTimeline,
   listRepositories,
   listSnapshots,
-  updatePullRequestState
+  updatePullRequestState,
+  pool
 } from "./db";
+import { createTopicsStore } from "./topics-store";
+import { topicArticle, topicIdPattern, topicSummary } from "../shared/topics";
 import { normalizeDateInput, recentHalfYearRange, todayISODate } from "./date";
 import { runDailyDigest, runRangeDigest } from "./digest";
 import { sendDesktopNotification } from "./notifications";
 
 export function createApiRouter(): Router {
   const router = Router();
+  const topics = createTopicsStore(pool);
+
+  // Validate the raw path before Express decodes :id (malformed escapes would
+  // otherwise reach the application's generic error middleware).
+  router.use("/topics", (req, res, next) => {
+    if (req.method === "GET" && req.path !== "/"
+      && !/^\/[a-z][a-z0-9-]{0,79}$/.test(req.path)) {
+      res.status(400).json({ error: "Invalid topic id" });
+      return;
+    }
+    next();
+  });
+
+  router.get("/topics", async (_req, res) => {
+    try {
+      res.json({ topics: (await topics.topics()).map(topicSummary) });
+    } catch {
+      res.status(503).json({ error: "专题服务暂时不可用，请稍后重试。" });
+    }
+  });
+  router.get("/topics/:id", async (req, res) => {
+    if (!topicIdPattern.test(req.params.id)) {
+      res.status(400).json({ error: "Invalid topic id" });
+      return;
+    }
+    try {
+      const topic = await topics.topic(req.params.id);
+      if (!topic) res.status(404).json({ error: "Topic not found" });
+      else res.json({ topic: topicArticle(topic) });
+    } catch {
+      res.status(503).json({ error: "专题服务暂时不可用，请稍后重试。" });
+    }
+  });
+  router.get(/^\/topics\//, (_req, res) => {
+    res.status(400).json({ error: "Invalid topic id" });
+  });
 
   router.get("/health", (_req, res) => {
     res.json({ ok: true, timezone: APP_TIMEZONE });
