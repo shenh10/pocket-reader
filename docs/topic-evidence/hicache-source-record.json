@@ -1,0 +1,151 @@
+{
+  "retrievedAt": "2026-11-28T03:30:36.262172+00:00",
+  "upstreamCommit": "41856be89e3ac41f2ca0d55c4880a8c2076fb1bc",
+  "sources": [
+    {
+      "url": "https://docs.sglang.io/docs/advanced_features/hicache_best_practices.md",
+      "sha256": "cbb287f431651538fe048cc3826476e2117ed1700d7f78d772680113f1df0004",
+      "bytes": 12912
+    },
+    {
+      "url": "https://github.com/sgl-project/sglang/blob/41856be89e3ac41f2ca0d55c4880a8c2076fb1bc/docs/docs/advanced_features/hicache_best_practices.mdx",
+      "sha256": "88c464df10abad5699d5748f267212904c5746a3f9eab9b7edc0fb2224c24f22",
+      "bytes": 12597
+    },
+    {
+      "url": "https://docs.sglang.io/docs/advanced_features/hicache_design.md",
+      "sha256": "70871b218f5e2375a686fa56fa20a6e63f3be90436151f42ba716d1541168342",
+      "bytes": 24563
+    },
+    {
+      "url": "https://github.com/sgl-project/sglang/blob/41856be89e3ac41f2ca0d55c4880a8c2076fb1bc/docs/docs/advanced_features/hicache_design.mdx",
+      "sha256": "1b3a1d12a4ab443d3392fa8654aa59a66bd3fdfeb0b81b7ee4761e9ff5204ffc",
+      "bytes": 24447
+    },
+    {
+      "url": "https://docs.sglang.io/docs/advanced_features/hicache_storage_runtime_attach_detach.md",
+      "sha256": "5b07a1ae82a9f02a5f35a80cb8c0d97603a34ac00efcf675edb34727c7d9bc42",
+      "bytes": 6479
+    },
+    {
+      "url": "https://github.com/sgl-project/sglang/blob/41856be89e3ac41f2ca0d55c4880a8c2076fb1bc/docs/docs/advanced_features/hicache_storage_runtime_attach_detach.mdx",
+      "sha256": "0753a09e27d55e19bdc90cf772c07e176524116e546c0e8c40c1b02360655e49",
+      "bytes": 6275
+    }
+  ],
+  "excerpts": [
+    {
+      "source": "https://docs.sglang.io/docs/advanced_features/hicache_design.md",
+      "blockIndex": 0,
+      "line": 31,
+      "language": "mermaid",
+      "originalSha256": "86ec6d1e0dca944de9a4413e20365777524dd386127f63b57acd566d4b8cc1f0",
+      "publishedSha256": "86ec6d1e0dca944de9a4413e20365777524dd386127f63b57acd566d4b8cc1f0",
+      "changes": []
+    },
+    {
+      "source": "https://docs.sglang.io/docs/advanced_features/hicache_design.md",
+      "blockIndex": 1,
+      "line": 112,
+      "language": "python",
+      "originalSha256": "255944e69fc22dc20e3fcafc18c579c30dfcd14a8398d47d1e0a17f38f33ed71",
+      "publishedSha256": "255944e69fc22dc20e3fcafc18c579c30dfcd14a8398d47d1e0a17f38f33ed71",
+      "changes": []
+    },
+    {
+      "source": "https://docs.sglang.io/docs/advanced_features/hicache_best_practices.md",
+      "blockIndex": 1,
+      "line": 39,
+      "language": "bash",
+      "originalSha256": "97cff88f747b651fab115622946adfba01a612fb796a6fd9087dede0f34fa825",
+      "publishedSha256": "97cff88f747b651fab115622946adfba01a612fb796a6fd9087dede0f34fa825",
+      "changes": []
+    },
+    {
+      "source": "https://docs.sglang.io/docs/advanced_features/hicache_best_practices.md",
+      "blockIndex": 6,
+      "line": 155,
+      "language": "bash",
+      "originalSha256": "6d1b553fb23e3973495b261e58200b58ffafe71beb6491382ea7705aeaf75766",
+      "publishedSha256": "6d1b553fb23e3973495b261e58200b58ffafe71beb6491382ea7705aeaf75766",
+      "changes": []
+    },
+    {
+      "source": "https://docs.sglang.io/docs/advanced_features/hicache_best_practices.md",
+      "blockIndex": 8,
+      "line": 211,
+      "language": "bash",
+      "originalSha256": "41cae9aca39dd7fc611fb3573699dfff8e4d840a655ae90e8e061b308d2c6cc8",
+      "publishedSha256": "41cae9aca39dd7fc611fb3573699dfff8e4d840a655ae90e8e061b308d2c6cc8",
+      "changes": []
+    },
+    {
+      "source": "https://docs.sglang.io/docs/advanced_features/hicache_best_practices.md",
+      "blockIndex": 7,
+      "line": 186,
+      "language": "bash",
+      "originalSha256": "eb64c8d675ec747c919525e908183780088315dc06875bd8e9d4ea350ccff4d9",
+      "publishedSha256": "2567a47c5840f83bf4fb0aa8c775fe05185a3a074d7c4f1dd4832c52177a841c",
+      "changes": [
+        "Removed final dangling continuation backslash."
+      ]
+    },
+    {
+      "source": "https://docs.sglang.io/docs/advanced_features/hicache_best_practices.md",
+      "blockIndex": 5,
+      "line": 103,
+      "language": "bash",
+      "originalSha256": "704f18a14e0efee38d440b2e493928f2d1d3b236224e9e0e902503abd1de1b94",
+      "publishedSha256": "7d15a62736b3a5f53222b706bd5dd71b77aa7bc6a68d11d14738cd027328ae3e",
+      "changes": [
+        "Moved inline comment after backslash to before the decode command to preserve shell continuation."
+      ]
+    },
+    {
+      "source": "https://docs.sglang.io/docs/advanced_features/hicache_best_practices.md",
+      "blockIndex": 3,
+      "line": 74,
+      "language": "bash",
+      "originalSha256": "02b380d189308cb7f77b9acde9e7d677dff9910ab8280602915b6f7034befdfc",
+      "publishedSha256": "02b380d189308cb7f77b9acde9e7d677dff9910ab8280602915b6f7034befdfc",
+      "changes": []
+    },
+    {
+      "source": "https://docs.sglang.io/docs/advanced_features/hicache_storage_runtime_attach_detach.md",
+      "blockIndex": 1,
+      "line": 86,
+      "language": "bash",
+      "originalSha256": "4ef88061508b7c63ee47199edb53f17c7c509825bab02136883366e838ebc641",
+      "publishedSha256": "4ef88061508b7c63ee47199edb53f17c7c509825bab02136883366e838ebc641",
+      "changes": []
+    },
+    {
+      "source": "https://docs.sglang.io/docs/advanced_features/hicache_storage_runtime_attach_detach.md",
+      "blockIndex": 4,
+      "line": 111,
+      "language": "bash",
+      "originalSha256": "663bd0f157d90ce6389a10ed6a4f2bb612303bf06b25d0023d6d97021706a9ac",
+      "publishedSha256": "663bd0f157d90ce6389a10ed6a4f2bb612303bf06b25d0023d6d97021706a9ac",
+      "changes": []
+    },
+    {
+      "source": "https://docs.sglang.io/docs/advanced_features/hicache_storage_runtime_attach_detach.md",
+      "blockIndex": 5,
+      "line": 130,
+      "language": "bash",
+      "originalSha256": "653d51c7d33eec18551f57c7f85f12eecc783ba4f2a49a4b4ff897023493c6aa",
+      "publishedSha256": "653d51c7d33eec18551f57c7f85f12eecc783ba4f2a49a4b4ff897023493c6aa",
+      "changes": []
+    },
+    {
+      "source": "https://docs.sglang.io/docs/advanced_features/hicache_best_practices.md",
+      "blockIndex": 9,
+      "line": 250,
+      "language": "bash",
+      "originalSha256": "d11f580b0f73b1f4c0e104489fad90672f7c21b13c957c57cac7fe5d016d7337",
+      "publishedSha256": "d11f580b0f73b1f4c0e104489fad90672f7c21b13c957c57cac7fe5d016d7337",
+      "changes": []
+    }
+  ],
+  "bodySha256": "5f0681c77a1d020cf11c5dd49185d10500f31c1409b6ae0e4fe787bda44bcca1"
+}

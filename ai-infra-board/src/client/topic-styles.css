@@ -14,3 +14,4 @@
 @media(prefers-reduced-motion:reduce){.topicIndexEntry{transition:none}}
 .topicDiagram svg .flowchart-link,.topicDiagram svg .edgePaths path{stroke:#42594c!important;fill:none!important;stroke-width:1.5px}.topicDiagram svg .node rect,.topicDiagram svg .node polygon,.topicDiagram svg .node circle{fill:#edf3ee!important;stroke:#597361!important;stroke-width:1px}.topicDiagram svg text{fill:#25372d!important;font-size:14px}.topicDiagram svg marker path{fill:#42594c!important}.topicDiagram svg .edgeLabel rect{fill:#fbfcfa!important}
 .topicDiagram svg .nodeLabel,.topicDiagram svg .edgeLabel text{text-anchor:middle!important}.topicDiagram svg .label text{text-anchor:middle!important}
+.topicDiagram svg .cluster rect{fill:#f2f6f2!important;stroke:#8aa18f!important}.topicDiagram svg .cluster-label text{fill:#25372d!important}

@@ -7,7 +7,7 @@ The user requested closer fidelity to the original documentation and less indepe
 - Source snapshot: `da2d74d84b67acff423d0633115fa7b3d051e8d8`, observed 2026-11-27.
 - 25 chapters, each with nearby original-document links.
 - 17 verbatim upstream fences (16 code/configuration examples and one HA sequence diagram); source paths, line numbers and hashes are recorded in `mooncake-v2-excerpts.json`.
-- Seven original figure references with explicit links. Pocket Reader currently renders external image Markdown as an alt-text placeholder, so each reference also provides an actionable link to the official image. The standalone HTML includes those original figures.
+- Seven original figure references with explicit links. At v2 publication Pocket Reader still used alt-text placeholders; the later inline-image renderer fix now displays the figures directly. Explicit original-image links are retained, and the standalone HTML also includes the figures.
 - All nine original vLLM P/D benchmark data rows retained; only the header translated.
 - Removed the independently authored KV size derivation, hypothetical transfer estimate, custom deployment recipes and production acceptance roadmap.
 - Restored details from the original HiCache design: continuous prefix matching, prefetch trigger and timeout formula, two-thread pipeline, write policies, TP min reductions, page-first-direct layout, batch limits, overlap and MLA write-back behavior.

@@ -82,6 +82,16 @@
         "Preserved 17 verbatim upstream code/diagram fences, official figures and benchmark values; added explicit editorial notes only for source prerequisites/inconsistencies.",
         "Included upstream Apache-2.0 license and excerpt provenance."
       ]
+    },
+    {
+      "id": "sglang-hicache-tutorial",
+      "reviewedArticleHash": "5f0681c77a1d020cf11c5dd49185d10500f31c1409b6ae0e4fe787bda44bcca1",
+      "publishedContentHash": "5f0681c77a1d020cf11c5dd49185d10500f31c1409b6ae0e4fe787bda44bcca1",
+      "changes": [
+        "Chinese abridged translation of the three official HiCache pages; source-linked sections.",
+        "Official examples extracted with hashes; two shell continuation formatting repairs explicitly noted.",
+        "Four original figure URLs, one original Mermaid diagram, historical benchmarks attributed to their source."
+      ]
     }
   ],
   "evidence": [
