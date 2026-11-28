@@ -72,7 +72,7 @@ export function TopicMarkdown({ body }: { body: string }) {
       if (!/^https?:\/\//i.test(href)) return <span>{children}</span>;
       return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>;
     },
-    img: ({ alt }) => <span className="topicMediaPlaceholder">{alt || "图示"}</span>,
+    img: ({ src, alt, title }) => <img src={src} alt={alt ?? ""} title={title} loading="lazy" decoding="async" referrerPolicy="no-referrer" />,
     pre: ({ children }) => {
       const code = Children.toArray(children)[0];
       if (isValidElement<{ className?: string; children?: React.ReactNode }>(code) && code.props.className?.includes("language-mermaid")) return <MermaidDiagram source={textContent(code.props.children).trim()} />;
